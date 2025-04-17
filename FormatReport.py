@@ -134,7 +134,7 @@ def autofit(sheet):
                     cell_length = len(str(cell.value))
                     if cell_length > max_length:
                         max_length = cell_length
-            except:
+            except Exception as e:
                 pass
 
         # fit column widths based on max length
@@ -143,12 +143,12 @@ def autofit(sheet):
 
 def check_no_attribute(sheet, range):
     """Checks if cell in given range is empty or states 'No Drive'"""
-    EMPTY = Rule(
+    empty = Rule(
         type='expression',
         formula=['OR(ISBLANK(J2), LOWER(J2)="no drive")'],
         dxf=DifferentialStyle(fill=GRAY_FILL)
     )
-    sheet.conditional_formatting.add(range, EMPTY)
+    sheet.conditional_formatting.add(range, empty)
 
 def apply_conditional_formatting(sheet, sheet_name):
     """Applies conditional formatting to passed in sheet"""
@@ -161,20 +161,20 @@ def apply_conditional_formatting(sheet, sheet_name):
 
     # create rule specific to dash inventory sheet
     if sheet_name == 'Dash Inventory':
-        SCRAP = Rule(
+        scrap = Rule(
             type='expression',
             formula=[f'$A2="SCRP"'],
             dxf=DifferentialStyle(fill=RED_FILL)
         )
-        sheet.conditional_formatting.add(f'A2:A{max_row}', SCRAP)
+        sheet.conditional_formatting.add(f'A2:A{max_row}', scrap)
         return
 
-    SCRAP = Rule(
+    scrap = Rule(
         type='expression',
         formula=[f'$C2="SCRP"'],
         dxf=DifferentialStyle(fill=RED_FILL)
     )
-    sheet.conditional_formatting.add(f'C2:C{max_row}', SCRAP)
+    sheet.conditional_formatting.add(f'C2:C{max_row}', scrap)
 
     # memory formatting
     if sheet_name in {'Desktops', 'Laptops', 'Servers'}:
