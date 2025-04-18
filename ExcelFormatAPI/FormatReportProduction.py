@@ -134,21 +134,21 @@ def autofit(sheet):
                     cell_length = len(str(cell.value))
                     if cell_length > max_length:
                         max_length = cell_length
-            except Exception as e:
+            except Exception:
                 pass
 
         # fit column widths based on max length
         adjusted_width = max_length + 3
         sheet.column_dimensions[column_letter].width = adjusted_width
 
-def check_no_attribute(sheet, range):
+def check_no_attribute(sheet, check_empty_range):
     """Checks if cell in given range is empty or states 'No Drive'"""
     empty = Rule(
         type='expression',
         formula=['OR(ISBLANK(J2), LOWER(J2)="no drive")'],
         dxf=DifferentialStyle(fill=GRAY_FILL)
     )
-    sheet.conditional_formatting.add(range, empty)
+    sheet.conditional_formatting.add(check_empty_range, empty)
 
 def apply_conditional_formatting(sheet, sheet_name):
     """Applies conditional formatting to passed in sheet"""
@@ -191,7 +191,6 @@ def apply_conditional_formatting(sheet, sheet_name):
                 dxf=DifferentialStyle(fill=PatternFill(bgColor=color))
             )
             sheet.conditional_formatting.add(f'{mem_col}2:{mem_col}{max_row}', rule)
-        notes_col_letter = None
 
     # look for notes column
     notes_col_index = headers.index('Notes') + 1  # index of notes column
@@ -220,9 +219,6 @@ def apply_conditional_formatting(sheet, sheet_name):
             check_empty_range = f'$J2:$X{max_row}'
 
     check_no_attribute(sheet, check_empty_range)
-
-def get_path(excel_file): # FIXME: remove or implement depending on data handling
-    return "temp.xlsx"
 
 def format_testing_report(excel_file):
     # parameter will be full excel file object
