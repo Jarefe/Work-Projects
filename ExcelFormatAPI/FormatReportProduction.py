@@ -209,9 +209,7 @@ def apply_conditional_formatting(sheet, sheet_name):
 
     # apply empty cell formatting
     match sheet_name:
-        case "Desktops":
-            check_empty_range = f'$J2:$R{max_row}'
-        case "Laptops":
+        case "Desktops" | "Laptops":
             check_empty_range = f'$J2:$R{max_row}'
         case "Networking":
             check_empty_range = f'$J2:$O{max_row}'
