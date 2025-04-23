@@ -1,5 +1,4 @@
 import json
-
 from openpyxl import Workbook, load_workbook
 from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
@@ -257,10 +256,8 @@ def process_workbook(workbook):
         print(f"Error occurred: {e}")
         raise
 
-def temporary_convert_to_JSON(workbook):
+def FOR_TESTING_convert_to_JSON(workbook):
     """Converts workbook object to JSON and returns JSON data"""
-
-    print("Converting to JSON...")
 
     try:
         json_data = []
@@ -280,7 +277,6 @@ def temporary_convert_to_JSON(workbook):
             # append sheet data to json_data list
             json_data.append(sheet_data)
 
-        print(json_data)
         # convert json_data to JSON string and return
         return json.dumps(json_data)
 
@@ -290,8 +286,6 @@ def temporary_convert_to_JSON(workbook):
 
 def format_JSON_data(data):
     """Formats passed in JSON data and returns workbook object"""
-    print("Formatting JSON data...")
-
     try:
         # parse JSON string to Python object if string
         if isinstance(data, str):
