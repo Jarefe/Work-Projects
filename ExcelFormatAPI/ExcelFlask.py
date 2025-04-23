@@ -1,6 +1,7 @@
 import io, os
 from flask import Flask, request, jsonify, send_file
-from FormatReportProduction import format_testing_report
+from openpyxl import load_workbook # remove when done testing JSON function
+from FormatReportProduction import temporary_convert_to_JSON, format_JSON_data
 
 app = Flask(__name__)
 
@@ -14,7 +15,11 @@ def index():
     </form>"""
 
 @app.route('/format', methods=['POST'])
-def upload():
+def format_testing_report():
+
+    # TODO: accept JSON data as input
+
+
     if 'file' not in request.files:
         return jsonify({'error':'No file part'})
 
@@ -24,6 +29,12 @@ def upload():
         return jsonify({'error':'No selected file'})
 
     try:
+        # TODO: change input type to list/dictionary instead of file object
+        # json_data = request.get_json()
+        #
+        # if not json_data:
+        #     return jsonify({'error':'No JSON data provided'})
+
         # get original filename
         original_filename = file.filename
 
@@ -31,7 +42,8 @@ def upload():
         in_memory_file = io.BytesIO(file.read())
 
         # format in memory file object
-        processed_workbook = format_testing_report(in_memory_file)
+        # FIXME: remove temporary_convert_to_JSON when done with testing
+        processed_workbook = format_JSON_data(temporary_convert_to_JSON(load_workbook(in_memory_file)))
 
         # save the processed workbook to a new in memory object
         output = io.BytesIO()

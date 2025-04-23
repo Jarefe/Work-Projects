@@ -1,4 +1,7 @@
+import json
+
 from openpyxl import Workbook, load_workbook
+from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
 from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import Rule
@@ -7,9 +10,8 @@ from openpyxl.utils import get_column_letter
 
 
 # NOTE: This program does not currently handle AIOs
-# TODO: setup with API using flask
 # TODO: handle description cleaning and copying to notes
-# TODO: try to optimize functions that require looping through every value
+# TODO: restructure code to handle list/dict input instead of workbook
 
 # FORMATTING RULES
 # NOTE: can change colors as necessary
@@ -218,15 +220,17 @@ def apply_conditional_formatting(sheet, sheet_name):
 
     check_no_attribute(sheet, check_empty_range)
 
-def format_testing_report(excel_file):
-    # parameter will be full excel file object
+def process_workbook(workbook):
+    """Processes workbook object and returns formatted workbook object"""
 
+    # check if valid workbook object was passed in
     try:
-        # load workbook from file-like object
-        original_wb = load_workbook(excel_file)
+        if not isinstance(workbook, OpenpyxlWorkbook):
+            raise TypeError("Could not process workbook.")
+        print("Valid workbook with sheet names: ", workbook.sheetnames)
 
         # copy data to new workbook
-        wb = copy_data(original_wb)
+        wb = copy_data(workbook)
 
         # go through each sheet in the workbook
         for sheet_name in wb.sheetnames:
@@ -248,6 +252,105 @@ def format_testing_report(excel_file):
             autofit(current_sheet)
 
         return wb
+
+    except TypeError as e:
+        print(f"Error occurred: {e}")
+        raise
+
+def temporary_convert_to_JSON(workbook):
+    """Converts workbook object to JSON and returns JSON data"""
+
+    print("Converting to JSON...")
+
+    try:
+        json_data = []
+        for sheet in workbook.worksheets:
+            # create dictionary for each sheet with sheet name and data
+            sheet_data = {'sheet_name': sheet.title, 'data': []}
+            # get headers from first row of sheet and store in list
+            headers = [cell.value for cell in sheet[1]]
+
+            # loop through each row in sheet (skipping headers) and store data in list of dictionaries
+            # values_only=True ensures that only values are returned and not cell objects
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                # create dictionary for each row with header and value
+                row_data = {header: value for header, value in zip(headers, row)}
+                sheet_data['data'].append(row_data)
+
+            # append sheet data to json_data list
+            json_data.append(sheet_data)
+
+        print(json_data)
+        # convert json_data to JSON string and return
+        return json.dumps(json_data)
+
+    except Exception as e:
+        print(f"Error converting to JSON: {e}")
+        raise
+
+def format_JSON_data(data):
+    """Formats passed in JSON data and returns workbook object"""
+    print("Formatting JSON data...")
+
+    try:
+        # parse JSON string to Python object if string
+        if isinstance(data, str):
+            data = json.loads(data)
+
+        # create new workbook
+        wb = Workbook()
+        wb.remove(wb.active)
+
+        # create sheets and add data
+        for sheet_data in data:
+            # create new sheet
+            sheet = wb.create_sheet(title=sheet_data['sheet_name'])
+
+            # add headers
+            if sheet_data['data']:
+                headers = list(sheet_data['data'][0].keys())
+                for col, header in enumerate(headers, 1):
+                    cell = sheet.cell(row=1, column=col, value=header)
+                    cell.border = BORDER
+                    cell.alignment = ALIGNMENT
+
+                # add data
+                for row_idx, row_data in enumerate(sheet_data['data'], 2):
+                    for col_idx, header in enumerate(headers, 1):
+                        cell = sheet.cell(row=row_idx, column=col_idx, value=row_data[header])
+                        cell.border = BORDER
+                        cell.alignment = ALIGNMENT
+
+                # create table
+                create_table(sheet)
+
+                # apply orange fill to header row
+                format_header(sheet)
+
+                # apply conditional formatting
+                apply_conditional_formatting(sheet, sheet_data['sheet_name'])
+
+                # autofit columns
+                autofit(sheet)
+
+        return wb
+
+    except Exception as e:
+        print(f"Error formatting JSON data: {e}")
+        raise
+
+def format_excel_file(excel_file):
+    """Formats passed in excel file and returns workbook object"""
+    # parameter will be full excel file object
+    try:
+        # load workbook from file-like object
+        original_wb = load_workbook(excel_file)
+
+        # copy data to new workbook
+        wb = copy_data(original_wb)
+
+        # process workbook
+        process_workbook(wb)
 
     except Exception as e:
         print(f"Error occurred: {e}")
