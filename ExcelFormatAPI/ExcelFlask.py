@@ -1,11 +1,11 @@
-import os
-import uuid
-from flask import Flask, request, jsonify
+import os, uuid
+from flask import Flask, request, jsonify, send_from_directory
 from FormatReportProduction import format_JSON_data
 
 app = Flask(__name__)
 
 # FIXME: edit to correct filepath for dash server
+# TODO: remove print lines when finalizing
 FILE_DIRECTORY = './static/downloads'
 if not os.path.exists(FILE_DIRECTORY):
     os.makedirs(FILE_DIRECTORY, exist_ok=True)
@@ -45,6 +45,16 @@ def format_testing_report():
 
     except Exception as e:
         return jsonify({'error':str(e)})
+
+@app.route('/static/downloads/<filename>', methods=['GET'])
+def download_file(filename):
+    return send_from_directory(
+        FILE_DIRECTORY,
+        filename,
+        as_attachment=True,
+        attachment_filename=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
