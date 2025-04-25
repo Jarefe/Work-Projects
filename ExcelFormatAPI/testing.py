@@ -8,10 +8,8 @@ data = FOR_TESTING_convert_to_JSON(load_workbook('[TESTING_EXCEL_FILE_TO_BE_PROC
 
 response = requests.post(url, json=data)
 
-# save the returned excel file
 if response.ok:
-    with open('Formatted_Report.xlsx', 'wb') as f:
-        f.write(response.content)
-    print("Excel file saved as 'Formatted_Report.xlsx'")
+    download_url = response.json().get('download_url')
+    print("Download URL:", download_url)
 else:
     print("Error:", response.json())
