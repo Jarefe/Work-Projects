@@ -1,16 +1,12 @@
 import json
-from openpyxl import Workbook, load_workbook
-from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
+from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
 from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import Rule
 from openpyxl.worksheet.table import Table
 from openpyxl.utils import get_column_letter
 
-
-# NOTE: This program does not currently handle AIOs
 # TODO: handle description cleaning and copying to notes
-# TODO: restructure code to handle list/dict input instead of workbook
 
 # FORMATTING RULES
 # NOTE: can change colors as necessary
@@ -56,50 +52,6 @@ def clean_text(text):
     if isinstance(text, str):
         return text.replace(" - Dash Specs", "").strip()
     return text
-
-def copy_data(old_wb):
-    """Copies data from original excel file and inserts into newly created file"""
-
-    # create new workbook
-    wb = Workbook()
-
-    # remove default sheet from wb
-    wb.remove(wb.active)
-
-    # copy all non empty sheets
-    for sheet_name in old_wb.sheetnames:
-        original_sheet = old_wb[sheet_name]
-
-        # skip empty sheets
-        if is_sheet_empty(original_sheet):
-            print(f'{sheet_name} is empty; skipping')
-            continue
-
-        # create sheet in new workbook
-        new_sheet = wb.create_sheet(title=sheet_name)
-
-        # copy data from old sheet to new sheet columnwise
-        for col in original_sheet.iter_cols():
-            if col[0].value == "Description":
-                for cell in col:
-                    cleaned_value = clean_text(cell.value)
-                    new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cleaned_value)
-                    new_cell.border = BORDER
-                    new_cell.alignment = ALIGNMENT
-            else:
-                for cell in col:
-                    new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cell.value)
-                    new_cell.border = BORDER
-                    new_cell.alignment = ALIGNMENT
-    return wb
-
-def is_sheet_empty(sheet):  # TODO optimize this function
-    """Checks if there is information present other than the header line"""
-    for row in sheet.iter_rows(min_row=2):  # skip header
-        for cell in row:
-            if cell.value is not None:
-                return False  # if sheet has data beyond header
-    return True  # only header exists
 
 def create_table(sheet):
     """Creates a table using all the data in the given sheet"""
@@ -216,45 +168,10 @@ def apply_conditional_formatting(sheet, sheet_name):
             check_empty_range = f'$J2:$O{max_row}'
         case "Servers":
             check_empty_range = f'$J2:$X{max_row}'
+        case _:
+            check_empty_range = f'$J2:$O{max_row}' # defaults to smallest range
 
     check_no_attribute(sheet, check_empty_range)
-
-def process_workbook(workbook):
-    """Processes workbook object and returns formatted workbook object"""
-
-    # check if valid workbook object was passed in
-    try:
-        if not isinstance(workbook, OpenpyxlWorkbook):
-            raise TypeError("Could not process workbook.")
-        print("Valid workbook with sheet names: ", workbook.sheetnames)
-
-        # copy data to new workbook
-        wb = copy_data(workbook)
-
-        # go through each sheet in the workbook
-        for sheet_name in wb.sheetnames:
-            # get current sheet
-            current_sheet = wb[sheet_name]
-
-            # create table
-            create_table(current_sheet)
-
-            # apply orange fill to header row
-            format_header(current_sheet)
-
-            # apply conditional formatting
-            apply_conditional_formatting(current_sheet, sheet_name)
-
-            # "autofit" cells
-            # can comment out for efficiency
-            # has to loop through every single cell in each column to get longest string
-            autofit(current_sheet)
-
-        return wb
-
-    except TypeError as e:
-        print(f"Error occurred: {e}")
-        raise
 
 def FOR_TESTING_convert_to_JSON(workbook):
     """Converts workbook object to JSON and returns JSON data"""
@@ -327,25 +244,113 @@ def format_JSON_data(data):
                 # autofit columns
                 autofit(sheet)
 
+            else:
+                wb.remove(sheet)
+                print(f"Deleted empty sheet: {sheet.title}")
+                continue
+
         return wb
 
     except Exception as e:
         print(f"Error formatting JSON data: {e}")
         raise
 
-def format_excel_file(excel_file):
-    """Formats passed in excel file and returns workbook object"""
-    # parameter will be full excel file object
-    try:
-        # load workbook from file-like object
-        original_wb = load_workbook(excel_file)
+# from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
+# from openpxl import load_workbook
 
-        # copy data to new workbook
-        wb = copy_data(original_wb)
+# def copy_data(old_wb):
+#     """Copies data from original excel file and inserts into newly created file"""
+#
+#     # create new workbook
+#     wb = Workbook()
+#
+#     # remove default sheet from wb
+#     wb.remove(wb.active)
+#
+#     # copy all non empty sheets
+#     for sheet_name in old_wb.sheetnames:
+#         original_sheet = old_wb[sheet_name]
+#
+#         # skip empty sheets
+#         if is_sheet_empty(original_sheet):
+#             print(f'{sheet_name} is empty; skipping')
+#             continue
+#
+#         # create sheet in new workbook
+#         new_sheet = wb.create_sheet(title=sheet_name)
+#
+#         # copy data from old sheet to new sheet columnwise
+#         for col in original_sheet.iter_cols():
+#             if col[0].value == "Description":
+#                 for cell in col:
+#                     cleaned_value = clean_text(cell.value)
+#                     new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cleaned_value)
+#                     new_cell.border = BORDER
+#                     new_cell.alignment = ALIGNMENT
+#             else:
+#                 for cell in col:
+#                     new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cell.value)
+#                     new_cell.border = BORDER
+#                     new_cell.alignment = ALIGNMENT
+#     return wb
 
-        # process workbook
-        process_workbook(wb)
+# def is_sheet_empty(sheet):
+#     """Checks if there is information present other than the header line"""
+#     if sheet.max_row == 1: # if only header is present, then sheet is empty
+#         return True
+#     return False
 
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        raise
+
+# def process_workbook(workbook):
+#     """Processes workbook object and returns formatted workbook object"""
+#
+#     # check if valid workbook object was passed in
+#     try:
+#         if not isinstance(workbook, OpenpyxlWorkbook):
+#             raise TypeError("Could not process workbook.")
+#         print("Valid workbook with sheet names: ", workbook.sheetnames)
+#
+#         # copy data to new workbook
+#         wb = copy_data(workbook)
+#
+#         # go through each sheet in the workbook
+#         for sheet_name in wb.sheetnames:
+#             # get current sheet
+#             current_sheet = wb[sheet_name]
+#
+#             # create table
+#             create_table(current_sheet)
+#
+#             # apply orange fill to header row
+#             format_header(current_sheet)
+#
+#             # apply conditional formatting
+#             apply_conditional_formatting(current_sheet, sheet_name)
+#
+#             # "autofit" cells
+#             # can comment out for efficiency
+#             # has to loop through every single cell in each column to get longest string
+#             autofit(current_sheet)
+#
+#         return wb
+#
+#     except TypeError as e:
+#         print(f"Error occurred: {e}")
+#         raise
+
+# def format_excel_file(excel_file):
+#     """Formats passed in excel file and returns workbook object"""
+#     # parameter will be full excel file object
+#     try:
+#         # load workbook from file-like object
+#         original_wb = load_workbook(excel_file)
+#
+#         # copy data to new workbook
+#         wb = copy_data(original_wb)
+#
+#         # process workbook
+#         process_workbook(wb)
+#
+#     except Exception as e:
+#         print(f"Error occurred: {e}")
+#         raise
