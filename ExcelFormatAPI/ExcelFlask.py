@@ -1,8 +1,14 @@
-import io
-from flask import Flask, request, jsonify, send_file
+import os
+import uuid
+from flask import Flask, request, jsonify
 from FormatReportProduction import format_JSON_data
 
 app = Flask(__name__)
+
+# FIXME: edit to correct filepath for dash server
+FILE_DIRECTORY = './static/downloads'
+if not os.path.exists(FILE_DIRECTORY):
+    os.makedirs(FILE_DIRECTORY, exist_ok=True)
 
 @app.route('/format', methods=['POST'])
 def format_testing_report():
@@ -15,22 +21,27 @@ def format_testing_report():
 
         # format JSON data
         processed_workbook = format_JSON_data(json_data)
+        print('JSON data formatted')
 
-        # save the processed workbook to a new in memory object
-        output = io.BytesIO()
-        processed_workbook.save(output)
+        # generate unique file name
+        file_id = str(uuid.uuid4()) # unique identifier for file
+        print(f'File ID: {file_id}')
+        file_name = f'{file_id}.xlsx'
+        print(f'File name: {file_name}')
+        file_path = os.path.join(FILE_DIRECTORY, file_name)
+        print(f'File path: {file_path}')
 
-        # go to the beginning of the BytesIO object before sending to client
-        output.seek(0)
+        # save to file under filepath
+        try:
+            processed_workbook.save(file_path)
+            print(f'File saved to: {file_path}')
+        except Exception as e:
+            print(f'Error saving file: {e}')
+        # generate URL
+        download_url = f'/static/downloads/{file_name}'
 
-        formatted_filename = 'Formatted_Report.xlsx' # edit to append to filename output by dash
-
-        # export as excel file
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name=formatted_filename)
+        # return download url
+        return jsonify({'download_url':download_url})
 
     except Exception as e:
         return jsonify({'error':str(e)})
