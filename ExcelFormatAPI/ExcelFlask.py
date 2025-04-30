@@ -11,6 +11,22 @@ FILE_DIRECTORY = './static/downloads'
 if not os.path.exists(FILE_DIRECTORY):
     os.makedirs(FILE_DIRECTORY, exist_ok=True)
 
+@app.route('/')
+def image_test():
+    payload = {'folderName': 'greenteksolutions'}
+    files = [
+        ('image', ('imagetest.png', open('/Downloads/Test.png', 'rb'), 'image/png'))
+    ]
+    headers = {}
+
+    # Send request to external API
+    response = requests.post(URL, headers=headers, data=payload, files=files)
+
+    try:
+        return jsonify(response.json())
+    except ValueError:
+        return response.text, response.status_code
+
 @app.route('/format', methods=['POST'])
 def format_testing_report():
 
@@ -45,6 +61,21 @@ def format_testing_report():
         ]
         headers = {}
         response = requests.request("POST", URL, headers=headers, data=payload, files=files)
+
+        response_data = response.json()
+
+        print(response_data)
+
+        image_url = response_data.get('imageURL')
+        secure_url = response_data.get('secureURL')
+        status = response_data.get('status')
+
+        output = {
+            "image_url": image_url,
+            "secure_url": secure_url,
+            "status": status
+        }
+        print(output)
 
         # Return download url
         return jsonify({
