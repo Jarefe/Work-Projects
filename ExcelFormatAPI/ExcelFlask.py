@@ -37,6 +37,14 @@ def image_test():
 
                 print("Image downloaded successfully.")
 
+                output = {
+                    'image url': image_url,
+                    'secure url': response.json().get('secure_url'),
+                    'status': response.json().get('status')
+                }
+
+                print(output)
+
                 return send_from_directory(
                     FILE_DIRECTORY,
                     filename,
