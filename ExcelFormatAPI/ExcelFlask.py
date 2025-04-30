@@ -11,21 +11,46 @@ FILE_DIRECTORY = './static/downloads'
 if not os.path.exists(FILE_DIRECTORY):
     os.makedirs(FILE_DIRECTORY, exist_ok=True)
 
-@app.route('/')
+@app.route('/image-download-test')
 def image_test():
     payload = {'folderName': 'greenteksolutions'}
+    # FIXME: change before running
+    filepath = 'CHANGE_ME_TO_IMAGE_FILEPATH.png'
     files = [
-        ('image', ('imagetest.png', open('/Downloads/Test.png', 'rb'), 'image/png'))
+        ('image', ('imagetest.png', open(filepath, 'rb'), 'image/png'))
     ]
     headers = {}
-
     # Send request to external API
     response = requests.post(URL, headers=headers, data=payload, files=files)
 
-    try:
-        return jsonify(response.json())
-    except ValueError:
-        return response.text, response.status_code
+    if response.status_code == 200: # indicates okay status
+        image_url = response.json().get('image_url')
+        if image_url:
+            image_response = requests.get(image_url)
+            if image_response.status_code == 200:
+
+                # Save image
+                filename = 'downloaded_image.png'
+                filepath = os.path.join(FILE_DIRECTORY, filename)
+                with open(filepath, 'wb') as f:
+                    f.write(image_response.content)
+
+                print("Image downloaded successfully.")
+
+                return send_from_directory(
+                    FILE_DIRECTORY,
+                    filename,
+                    as_attachment=True,
+                    download_name='downloaded_test_image.png',
+                    mimetype='image/png'
+                )
+            else:
+                return f"Failed to fetch image from URL: {image_response.status_code}", image_response.status_code
+        else:
+            return "No image URL in response.", 400 # indicates error
+    else:
+        return f"API request failed: {response.status_code} - {response.text}", response.status_code
+
 
 @app.route('/format', methods=['POST'])
 def format_testing_report():
@@ -62,20 +87,22 @@ def format_testing_report():
         headers = {}
         response = requests.request("POST", URL, headers=headers, data=payload, files=files)
 
-        response_data = response.json()
+        # Commented block below does not work with smartimageserve api
 
-        print(response_data)
-
-        image_url = response_data.get('imageURL')
-        secure_url = response_data.get('secureURL')
-        status = response_data.get('status')
-
-        output = {
-            "image_url": image_url,
-            "secure_url": secure_url,
-            "status": status
-        }
-        print(output)
+        # response_data = response.json()
+        #
+        # print(response_data)
+        #
+        # image_url = response_data.get('imageURL')
+        # secure_url = response_data.get('secureURL')
+        # status = response_data.get('status')
+        #
+        # output = {
+        #     "image_url": image_url,
+        #     "secure_url": secure_url,
+        #     "status": status
+        # }
+        # print(output)
 
         # Return download url
         return jsonify({
