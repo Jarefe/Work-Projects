@@ -1,8 +1,10 @@
-import os, uuid
+import os, uuid, requests
 from flask import Flask, request, jsonify, send_from_directory
 from FormatReportProduction import format_JSON_data
 
 app = Flask(__name__)
+
+URL = "https://api.smartimageserve.com/upload"
 
 # FIXME: edit to correct filepath for dash server
 # TODO: remove print lines when finalizing
@@ -39,9 +41,27 @@ def format_testing_report():
             print(f'Error saving file: {e}')
         # generate URL
         download_url = f'/static/downloads/{file_name}'
+        download_url = request.url_root[:-1] + download_url
+
+        payload = {'folderName': 'greenteksolutions'}
+        files = [
+            ('file', (file_name, open(file_path, 'rb'),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
+        ]
+        headers = {}
+
+        response = requests.request("POST", URL, headers=headers, data=payload, files=files)
+
+        print(download_url)
+        print(response.text)
+        print(response.status_code)
 
         # return download url
-        return jsonify({'download_url':download_url})
+        return jsonify({
+            'download_url':download_url,
+            'upload_status': response.status_code,
+            'upload_message': response.text
+        })
 
     except Exception as e:
         return jsonify({'error':str(e)})
@@ -52,7 +72,7 @@ def download_file(filename):
         FILE_DIRECTORY,
         filename,
         as_attachment=True,
-        attachment_filename=filename,
+        download_name=filename,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
