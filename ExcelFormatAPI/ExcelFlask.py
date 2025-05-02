@@ -1,10 +1,13 @@
 import os, uuid, requests
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from FormatReportProduction import format_JSON_data
 
 app = Flask(__name__)
 
-URL = "https://api.smartimageserve.com/upload"
+URL = 'https://api.smartimageserve.com/upload'
+
+load_dotenv()
 
 # FIXME: edit to correct filepath for dash server
 FILE_DIRECTORY = './static/downloads'
@@ -14,12 +17,12 @@ if not os.path.exists(FILE_DIRECTORY):
 @app.route('/image-download-test')
 def image_test():
     payload = {'folderName': 'greenteksolutions'}
-    # FIXME: change before running
-    filepath = 'CHANGE_ME_TO_IMAGE_FILEPATH.png'
+    filepath = os.getenv('TESTING_IMAGE')
     files = [
         ('image', ('imagetest.png', open(filepath, 'rb'), 'image/png'))
     ]
     headers = {}
+
     # Send request to external API
     response = requests.post(URL, headers=headers, data=payload, files=files)
 
@@ -35,7 +38,7 @@ def image_test():
                 with open(filepath, 'wb') as f:
                     f.write(image_response.content)
 
-                print("Image downloaded successfully.")
+                print('Image downloaded successfully.')
 
                 output = {
                     'image url': image_url,
@@ -45,6 +48,7 @@ def image_test():
 
                 print(output)
 
+                # Download file
                 return send_from_directory(
                     FILE_DIRECTORY,
                     filename,
@@ -53,11 +57,11 @@ def image_test():
                     mimetype='image/png'
                 )
             else:
-                return f"Failed to fetch image from URL: {image_response.status_code}", image_response.status_code
+                return f'Failed to fetch image from URL: {image_response.status_code}', image_response.status_code
         else:
-            return "No image URL in response.", 400 # indicates error
+            return 'No image URL in response.', 400 # indicates error
     else:
-        return f"API request failed: {response.status_code} - {response.text}", response.status_code
+        return f'API request failed: {response.status_code} - {response.text}', response.status_code
 
 
 @app.route('/format', methods=['POST'])
@@ -93,26 +97,28 @@ def format_testing_report():
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
         ]
         headers = {}
-        response = requests.request("POST", URL, headers=headers, data=payload, files=files)
+        response = requests.request('POST', URL, headers=headers, data=payload, files=files)
 
-        # Commented block below does not work with smartimageserve api
+        # Block below does not currently work with smartimageserve api
 
-        # response_data = response.json()
-        #
-        # print(response_data)
-        #
-        # image_url = response_data.get('imageURL')
-        # secure_url = response_data.get('secureURL')
-        # status = response_data.get('status')
-        #
-        # output = {
-        #     "image_url": image_url,
-        #     "secure_url": secure_url,
-        #     "status": status
-        # }
-        # print(output)
+        response_data = response.json()
+
+        print(response_data)
+
+        image_url = response_data.get('imageURL')
+        secure_url = response_data.get('secureURL')
+        status = response_data.get('status')
+
+        output = {
+            'image_url': image_url,
+            'secure_url': secure_url,
+            'status': status
+        }
+        print(output)
 
         # Return download url
+
+        # Return download url for front end to process
         return jsonify({
             'download_url':download_url,
             'upload_status': response.status_code,

@@ -47,11 +47,13 @@ ALIGNMENT = Alignment(
     vertical='center'
 )
 
+
 def clean_text(text):
     """Removes instances of ' - Dash Specs'"""
     if isinstance(text, str):
         return text.replace(" - Dash Specs", "").strip()
     return text
+
 
 def create_table(sheet):
     """Creates a table using all the data in the given sheet"""
@@ -67,11 +69,13 @@ def create_table(sheet):
     table = Table(displayName=f'Table_{sheet.title.replace(' ', '')}', ref=table_range)
     sheet.add_table(table)
 
+
 def format_header(sheet):
     """Applies orange fill to header line"""
     for col in range(1, sheet.max_column + 1):
         cell = sheet.cell(row=1, column=col)
         cell.fill = ORANGE_FILL
+
 
 def autofit(sheet):
     """Loops through each cell to get longest string and apply column spacing accordingly"""
@@ -94,6 +98,7 @@ def autofit(sheet):
         adjusted_width = max_length + 3
         sheet.column_dimensions[column_letter].width = adjusted_width
 
+
 def check_no_attribute(sheet, check_empty_range):
     """Checks if cell in given range is empty or states 'No Drive'"""
     empty = Rule(
@@ -102,6 +107,7 @@ def check_no_attribute(sheet, check_empty_range):
         dxf=DifferentialStyle(fill=GRAY_FILL)
     )
     sheet.conditional_formatting.add(check_empty_range, empty)
+
 
 def apply_conditional_formatting(sheet, sheet_name):
     """Applies conditional formatting to passed in sheet"""
@@ -169,9 +175,10 @@ def apply_conditional_formatting(sheet, sheet_name):
         case "Servers":
             check_empty_range = f'$J2:$X{max_row}'
         case _:
-            check_empty_range = f'$J2:$O{max_row}' # defaults to smallest range
+            check_empty_range = f'$J2:$O{max_row}'  # defaults to smallest range
 
     check_no_attribute(sheet, check_empty_range)
+
 
 def FOR_TESTING_convert_to_JSON(workbook):
     """Converts workbook object to JSON and returns JSON data"""
@@ -200,6 +207,7 @@ def FOR_TESTING_convert_to_JSON(workbook):
     except Exception as e:
         print(f"Error converting to JSON: {e}")
         raise
+
 
 def format_JSON_data(data):
     """Formats passed in JSON data and returns workbook object"""
