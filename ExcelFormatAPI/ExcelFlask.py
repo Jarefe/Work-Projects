@@ -1,4 +1,5 @@
 import os, uuid, requests
+from openpyxl import Workbook
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from FormatReportProduction import format_JSON_data
@@ -13,55 +14,6 @@ load_dotenv()
 FILE_DIRECTORY = './static/downloads'
 if not os.path.exists(FILE_DIRECTORY):
     os.makedirs(FILE_DIRECTORY, exist_ok=True)
-
-@app.route('/image-download-test')
-def image_test():
-    payload = {'folderName': 'greenteksolutions'}
-    filepath = os.getenv('TESTING_IMAGE')
-    files = [
-        ('image', ('imagetest.png', open(filepath, 'rb'), 'image/png'))
-    ]
-    headers = {}
-
-    # Send request to external API
-    response = requests.post(URL, headers=headers, data=payload, files=files)
-
-    if response.status_code == 200: # indicates okay status
-        image_url = response.json().get('image_url')
-        if image_url:
-            image_response = requests.get(image_url)
-            if image_response.status_code == 200:
-
-                # Save image
-                filename = 'downloaded_image.png'
-                filepath = os.path.join(FILE_DIRECTORY, filename)
-                with open(filepath, 'wb') as f:
-                    f.write(image_response.content)
-
-                print('Image downloaded successfully.')
-
-                output = {
-                    'image url': image_url,
-                    'secure url': response.json().get('secure_url'),
-                    'status': response.json().get('status')
-                }
-
-                print(output)
-
-                # Download file
-                return send_from_directory(
-                    FILE_DIRECTORY,
-                    filename,
-                    as_attachment=True,
-                    download_name='downloaded_test_image.png',
-                    mimetype='image/png'
-                )
-            else:
-                return f'Failed to fetch image from URL: {image_response.status_code}', image_response.status_code
-        else:
-            return 'No image URL in response.', 400 # indicates error
-    else:
-        return f'API request failed: {response.status_code} - {response.text}', response.status_code
 
 
 @app.route('/format', methods=['POST'])
@@ -97,16 +49,13 @@ def format_testing_report():
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
         ]
         headers = {}
+
+        # Make POST request
         response = requests.request('POST', URL, headers=headers, data=payload, files=files)
-
-        # Block below does not currently work with smartimageserve api
-
         response_data = response.json()
 
-        print(response_data)
-
-        image_url = response_data.get('imageURL')
-        secure_url = response_data.get('secureURL')
+        image_url = response_data.get('image_url')
+        secure_url = response_data.get('secure_url')
         status = response_data.get('status')
 
         output = {
@@ -114,29 +63,17 @@ def format_testing_report():
             'secure_url': secure_url,
             'status': status
         }
-        print(output)
-
-        # Return download url
+        print(output) # for debugging purposes
 
         # Return download url for front end to process
         return jsonify({
-            'download_url':download_url,
+            'download_url': secure_url,
             'upload_status': response.status_code,
             'upload_message': response.text
         })
 
     except Exception as e:
         return jsonify({'error':str(e)})
-
-@app.route('/static/downloads/<filename>', methods=['GET'])
-def download_file(filename):
-    return send_from_directory(
-        FILE_DIRECTORY,
-        filename,
-        as_attachment=True,
-        download_name=filename,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
 
 if __name__ == '__main__':
     app.run(debug=True)
