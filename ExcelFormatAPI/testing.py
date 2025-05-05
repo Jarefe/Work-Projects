@@ -1,12 +1,15 @@
-import requests
+import os, requests
+from dotenv import load_dotenv
 from openpyxl.reader.excel import load_workbook
 from FormatReportProduction import FOR_TESTING_convert_to_JSON
 
 url = 'http://localhost:5000/format'
 
-data = FOR_TESTING_convert_to_JSON(load_workbook('[TESTING_EXCEL_FILE_TO_BE_PROCESSED]'))
+load_dotenv()
 
-response = requests.post(url, json=data)
+testing_data = FOR_TESTING_convert_to_JSON(load_workbook(os.getenv('TESTING_FILE')))
+
+response = requests.post(url, json=testing_data)
 
 if response.ok:
     download_url = response.json().get('download_url')

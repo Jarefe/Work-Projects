@@ -1,20 +1,10 @@
-import os, uuid, requests
-from openpyxl import Workbook
-from dotenv import load_dotenv
-from flask import Flask, request, jsonify, send_from_directory
+import io, uuid, requests
+from flask import Flask, request, jsonify
 from FormatReportProduction import format_JSON_data
 
 app = Flask(__name__)
 
 URL = 'https://api.smartimageserve.com/upload'
-
-load_dotenv()
-
-# FIXME: edit to correct filepath for dash server
-FILE_DIRECTORY = './static/downloads'
-if not os.path.exists(FILE_DIRECTORY):
-    os.makedirs(FILE_DIRECTORY, exist_ok=True)
-
 
 @app.route('/format', methods=['POST'])
 def format_testing_report():
@@ -31,21 +21,22 @@ def format_testing_report():
         # Generate unique file name
         file_id = str(uuid.uuid4()) # unique identifier for file
         file_name = f'{file_id}.xlsx'
-        file_path = os.path.join(FILE_DIRECTORY, file_name)
 
-        # Save to file under filepath
+        file_stream = io.BytesIO()
+
+        # Save workbook to filestream
         try:
-            processed_workbook.save(file_path)
-            print(f'File saved to: {file_path}')
+            processed_workbook.save(file_stream)
+            file_stream.seek(0) # go to beginning of stream before uploading
+            print(f'File generated')
         except Exception as e:
             print(f'Error saving file: {e}')
 
         # Generate URL
-        download_url = f'{request.url_root[:-1]}/static/downloads/{file_name}'
 
         payload = {'folderName': 'greenteksolutions'}
         files = [
-            ('file', (file_name, open(file_path, 'rb'),
+            ('file', (file_name, file_stream,
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
         ]
         headers = {}
