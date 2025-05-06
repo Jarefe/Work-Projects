@@ -91,8 +91,11 @@ def serial_number_exists(serial_numbers: list[str]):
         # Create serial numbers HTML content (print them vertically)
         serial_numbers_html = ''
         for serial in serial_numbers:
-            # If the serial number is a float, convert it to an int and then to a string
+            # Check if the serial number is purely numeric (can be a float that represents an integer)
             if isinstance(serial, float):
+                if serial.is_integer():  # If it's a float like 123.0, treat it as an integer
+                    serial = str(int(serial))  # Convert to int, then to string
+            elif serial.isdigit():  # If it's a string that contains only digits, treat it as a number
                 serial = str(int(serial))  # Convert to int, then to string
 
             # Add serial number to HTML content
@@ -135,8 +138,11 @@ def copy_serial_numbers(serial_numbers: list[str]):
 
     if not serial_numbers:
         return
-    # Ensure each serial number is in string format, even if some are not
-    serial_numbers = [str(serial) for serial in serial_numbers]
+    # Ensure each serial number is in string format, and handle numbers with possible .0
+    serial_numbers = [
+        str(int(serial)) if isinstance(serial, float) and serial.is_integer() else str(serial)
+        for serial in serial_numbers
+    ]
 
     # Join the serial numbers with newlines and copy to clipboard
     pyperclip.copy('\n'.join(serial_numbers))
