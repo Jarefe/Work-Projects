@@ -56,6 +56,7 @@ def format_testing_report():
         }
         print(output) # for debugging purposes
 
+        # TODO: return fully formatted file for download instead of returning download link
         # Return download url for front end to process
         return jsonify({
             'download_url': secure_url,
