@@ -202,6 +202,14 @@ def process_dataframe(df: pd.DataFrame) -> None:
 
     # Additional metrics and visualizations are generated through specific functions
 
+def output_graphs(df: pd.DataFrame):
+    profit_distribution(df)  # Generate relevant visualizations
+    sale_price_vs_profit(df)
+    sales_by_condition(df)
+    days_to_sell_distribution(df)
+    avg_profit_by_purchase_range(df)
+    monthly_profit_over_time(df)
+
 def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
     """
     Main entry point for reading an Excel file, processing data, and printing or visualizing outputs.
@@ -211,12 +219,8 @@ def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx')
     # Load and process the Excel file
     df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
     process_dataframe(df)  # Perform main data processing steps
-    profit_distribution(df)  # Generate relevant visualizations
-    sale_price_vs_profit(df)
-    sales_by_condition(df)
-    days_to_sell_distribution(df)
-    avg_profit_by_purchase_range(df)
-    monthly_profit_over_time(df)
+    # output_graphs(df)
+    return df
 
 # Entry point for executing the script
 generate_financial_summary()
