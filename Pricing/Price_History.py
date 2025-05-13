@@ -105,6 +105,21 @@ def days_to_sell_distribution(df):
     plt.tight_layout()
     plt.show()
 
+def avg_profit_by_purchase_range(df):
+    bin_edges = np.histogram_bin_edges(df['Purchase Cost'], bins=20)
+    df['Cost Range'] = pd.cut(df['Purchase Cost'], bins=bin_edges, include_lowest=True)
+
+    avg_profit = df.groupby('Cost Range')['Profit'].mean().reset_index()
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Cost Range', y='Profit', data=avg_profit)
+    plt.title('Average Profit by Purchase Range')
+    plt.xlabel('Purchase Cost Range')
+    plt.ylabel('Average Profit ($)')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
 def process_dataframe(df: pd.DataFrame) -> None:
     """
     Perform various processing steps on the input DataFrame, including:
