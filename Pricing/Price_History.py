@@ -120,6 +120,21 @@ def avg_profit_by_purchase_range(df):
     plt.tight_layout()
     plt.show()
 
+def monthly_profit_over_time(df):
+    df['Sale Date'] = pd.to_datetime(df['Sale Date'], errors='coerce')
+    df = df.dropna(subset=['Sale Date'])
+
+    profit = df.groupby(df['Sale Date'].dt.to_period('M'))['Profit'].sum().reset_index()
+    profit['Sale Date'] = profit['Sale Date'].dt.to_timestamp()
+
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x='Sale Date', y='Profit', data=profit, marker='o')
+    plt.title('Total Profit Over Time')
+    plt.xlabel('Month')
+    plt.ylabel('Total Profit ($)')
+    plt.tight_layout()
+    plt.show()
+
 def process_dataframe(df: pd.DataFrame) -> None:
     """
     Perform various processing steps on the input DataFrame, including:
