@@ -66,6 +66,17 @@ def print_summary(values):
         print(f"# Days to Sell  : {value['# Days to sell']}")
         print("-" * 40)
 
+def profit_distribution_graph(df: pd.DataFrame, title: str = "Profit Distribution"):
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['Profit'], kde=True, bins=50, color='blue')
+    plt.title(title)
+    plt.xlabel('Profit ($)')
+    plt.ylabel('Number of Items')
+    plt.tight_layout()
+    plt.show()
+
+
+
 def process_dataframe(df: pd.DataFrame) -> None:
     """
     Perform various processing steps on the input DataFrame, including:
