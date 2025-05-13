@@ -92,6 +92,19 @@ def sales_by_condition(df):
     plt.tight_layout()
     plt.show()
 
+def days_to_sell_distribution(df):
+    df['# Days to sell'] = df.apply(
+        lambda row: calculate_date_difference(row['Purchase Date'], row['Sale Date']),
+        axis=1
+    )
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['# Days to sell'], kde=True, bins=50, color='blue')
+    plt.title('Days to Sell Distribution')
+    plt.xlabel('# Days to Sell')
+    plt.ylabel('Number of Items')
+    plt.tight_layout()
+    plt.show()
+
 def process_dataframe(df: pd.DataFrame) -> None:
     """
     Perform various processing steps on the input DataFrame, including:
