@@ -38,6 +38,8 @@ def get_ebay_url(item_id: str) -> str:
     :param item_id: The unique identifier for the item, typically its name or model.
     :return: A valid URL string for searching the item on eBay.
     """
+    brand = input("Enter the brand of the item to search for on eBay: ")
+    item_id = brand + " " + item_id
     return (
         f'https://www.ebay.com/sch/i.html?_nkw={item_id.replace(" ", "+")}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1'
     )
@@ -70,32 +72,42 @@ def process_dataframe(df: pd.DataFrame) -> None:
       - Filtering out unwanted data
       - Computing metrics like profit, average costs, and sale durations
       - Printing a financial summary of the cleaned data
-    
+
     :param df: Input Pandas DataFrame containing raw pricing data.
     """
     # Extract the first item's identifier for context
     item = df.at[0, 'Item']
-    print(f'Data including scrap items:\n {df}')
-    
+    print(f"Processing data for item: {item}\n")
+
+    # Print initial data
+    print("Initial data (including scrap items):")
+    print(df, "\n")
+
     # Filter out scrap items from the dataset and make a new copy for safe calculations
     filtered_df = df[df['So Condition'] != 'SCRP'].copy()
-    print(f'Data excluding scrap items:\n {filtered_df}')
+    print("Data after filtering scrap items:")
+    print(filtered_df, "\n")
 
     # Calculate how many days it took to sell each item
     filtered_df['# Days to sell'] = filtered_df.apply(
         lambda row: calculate_date_difference(row['Purchase Date'], row['Sale Date']),
         axis=1
     )
-    print(f'Data with date difference:\n {filtered_df}')
 
-    # Compute basic statistics: number of sold items and total inventory count
+    print("Data with calculated '# Days to sell':")
+    print(filtered_df, "\n")
+
+    # Calculate basic statistics
     num_sold = len(filtered_df[filtered_df['Sale Price'].notna() & (filtered_df['Sale Price'] != 0)])
-    print(f'Number of sold items: {num_sold}')
     num_inventory = filtered_df['Purchase Date'].count()
-    print(f'Total number of items (sold + in inventory): {num_inventory}')
-    print(f'Total number of items left in inventory: {num_inventory - num_sold}')
+    inventory_left = num_inventory - num_sold
 
-    # Calculate various financial statistics based on the data
+    print(f"🛠 Statistics:")
+    print(f"  Total items: {num_inventory}")
+    print(f"  Items sold: {num_sold}")
+    print(f"  Items remaining in inventory: {inventory_left}\n")
+
+    # Financial statistics
     avg_purchase_cost = mean(filtered_df['Purchase Cost'])
     avg_purchase_cost_no0 = mean(
         filtered_df['Purchase Cost'][(filtered_df['Purchase Cost'].notna()) & (filtered_df['Purchase Cost'] != 0)]
@@ -114,40 +126,39 @@ def process_dataframe(df: pd.DataFrame) -> None:
     avg_profit_no0 = mean(
         filtered_df['Profit'][(filtered_df['Profit'].notna()) & (filtered_df['Profit'] != 0)]
     )
-    profit_array = np.array(filtered_df['Profit'])
+    total_profit = sum(filtered_df['Profit'])
 
-    # Print overall performance summary
-    print(f"\n📊 {item} Profit Summary")
-    print("-" * 40)
-    print(f"{'Total profit:':40} ${sum(profit_array):,.2f}\n")
-    print(f"{'Sale price range [min, max] (excl. $0):':40} [${min_sale_price:,.2f}, ${max_sale_price:,.2f}]")
-    print(f"{'Profit range [min, max]:':40} [${min_profit:,.2f}, ${max_profit:,.2f}]")
+    print("📈 Financial Summary:")
+    print(f"  Total profit: ${total_profit:,.2f}")
+    print(f"  Sale price range (excluding $0): [${min_sale_price:,.2f}, ${max_sale_price:,.2f}]")
+    print(f"  Profit range: [${min_profit:,.2f}, ${max_profit:,.2f}]\n")
 
-    # Print financial summaries, including averages with and without zeros
-    print(f"\nSummary including values of 0")
-    print(f"{'Average profit per item:':40} ${avg_profit:,.2f}")
-    print(f"{'Average purchase cost per item:':40} ${avg_purchase_cost:,.2f}")
-    print(f"{'Average sale price per item:':40} ${avg_sale_price:,.2f}")
-    print(f"\nSummary excluding values of 0")
-    print(f"{'Avg profit per item (excl. $0):':40} ${avg_profit_no0:,.2f}")
-    print(f"{'Avg purchase cost per item (excl. $0):':40} ${avg_purchase_cost_no0:,.2f}")
-    print(f"{'Avg sale price per item (excl. $0):':40} ${avg_sale_price_no0:,.2f}")
-    print("-" * 40)
+    print("Averages (including zeros):")
+    print(f"  Average profit per item: ${avg_profit:,.2f}")
+    print(f"  Average purchase cost per item: ${avg_purchase_cost:,.2f}")
+    print(f"  Average sale price per item: ${avg_sale_price:,.2f}\n")
+
+    print("Averages (excluding zeros):")
+    print(f"  Average profit per item (excl. $0): ${avg_profit_no0:,.2f}")
+    print(f"  Average purchase cost per item (excl. $0): ${avg_purchase_cost_no0:,.2f}")
+    print(f"  Average sale price per item (excl. $0): ${avg_sale_price_no0:,.2f}\n")
 
     # Find items of interest: max profit, max sale, min profit, and min sale
     item_dict = {
         "Max Profit Item": filtered_df.loc[filtered_df['Profit'].idxmax()],
         "Min Profit Item": filtered_df.loc[filtered_df['Profit'].idxmin()],
-        "Max Sale Item": filtered_df.loc[filtered_df['Sale Price'][(filtered_df['Sale Price'].notna()) & 
+        "Max Sale Item": filtered_df.loc[filtered_df['Sale Price'][(filtered_df['Sale Price'].notna()) &
                                                                    (filtered_df['Sale Price'] != 0)].idxmax()],
-        "Min Sale Item": filtered_df.loc[filtered_df['Sale Price'][(filtered_df['Sale Price'].notna()) & 
+        "Min Sale Item": filtered_df.loc[filtered_df['Sale Price'][(filtered_df['Sale Price'].notna()) &
                                                                    (filtered_df['Sale Price'] != 0)].idxmin()]
     }
+
+    print("🔍 Highlighted Items:")
     print_summary(item_dict)
 
     # Generate an eBay URL for the item with the highest profit
     url = get_ebay_url(str(item_dict["Max Profit Item"]['Item']))
-    print(f"Ebay URL to sold listings: {url} \n")
+    print(f"Ebay URL to sold listings for the highest profit item: {url}\n")
 
 def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
     """
