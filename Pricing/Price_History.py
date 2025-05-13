@@ -75,7 +75,13 @@ def profit_distribution_graph(df: pd.DataFrame, title: str = "Profit Distributio
     plt.tight_layout()
     plt.show()
 
-
+def sale_price_vs_profit(df):
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(x='Sale Price', y='Profit', data=df, hue='Condition', palette='viridis')
+    plt.title('Sale Price vs. Profit')
+    plt.xlabel('Sale Price ($)')
+    plt.ylabel('Profit ($)')
+    plt.show()
 
 def process_dataframe(df: pd.DataFrame) -> None:
     """
