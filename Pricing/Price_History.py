@@ -83,6 +83,15 @@ def sale_price_vs_profit(df):
     plt.ylabel('Profit ($)')
     plt.show()
 
+def sales_by_condition(df):
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x='Condition', data=df, y='Sale Price', hue='Condition', palette='coolwarm')
+    plt.title('Sales by Condition')
+    plt.xlabel('Condition')
+    plt.ylabel('Number of Sales')
+    plt.tight_layout()
+    plt.show()
+
 def process_dataframe(df: pd.DataFrame) -> None:
     """
     Perform various processing steps on the input DataFrame, including:
