@@ -1,13 +1,12 @@
+# Import required libraries and modules
 import os
 from datetime import datetime
-
+import plotly.express as px
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
-import seaborn as sns
 from dotenv import load_dotenv
 
-# Load environment variables, which might include file paths or configurations
+# Load environment variables (e.g., file paths or other configurations)
 load_dotenv()
 
 def calculate_date_difference(date1, date2) -> int:
@@ -23,33 +22,35 @@ def calculate_date_difference(date1, date2) -> int:
         return 0
 
     try:
-        # Ensure input is parsed into datetime objects for calculation
+        # Parse the input into datetime objects for calculation
         date1_obj = datetime.strptime(str(date1), '%m/%d/%Y')
         date2_obj = datetime.strptime(str(date2), '%m/%d/%Y')
-        return abs((date2_obj - date1_obj).days)
+        return abs((date2_obj - date1_obj).days)  # Return absolute difference in days
     except ValueError:
-        # Handle cases of invalid date formats
+        # Handle invalid date formats explicitly
         return 0
+
 
 def get_ebay_url(item_id: str) -> str:
     """
     Generate a search URL for eBay to find sold and completed listings for an item.
 
-    :param item_id: The unique identifier for the item, typically its name or model.
-    :return: A valid URL string for searching the item on eBay.
+    :param item_id: Unique identifier for the item, typically its name or model.
+    :return: Valid eBay search URL for sold and completed listings.
     """
     brand = input("Enter the brand of the item to search for on eBay: ")
-    item_id = brand + " " + item_id  # Combine brand and item name for a more specific search
+    item_id = brand + " " + item_id  # Concatenate brand and item name for specific search
     return (
         f'https://www.ebay.com/sch/i.html?_nkw={item_id.replace(" ", "+")}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1'
     )
 
+
 def print_summary(values):
     """
-    Print a summary of financial attributes for specific items in the dataset.
+    Print key financial details and metrics for items in the dataset.
 
-    :param values: A dictionary where the keys are labels (e.g., 'Max Profit Item'),
-                   and values are rows from the DataFrame containing item details.
+    :param values: Dictionary where keys are labels (e.g., 'Max Profit Item')
+                   and values are rows from the DataFrame.
     """
     for key, value in values.items():
         print(key)
@@ -66,161 +67,208 @@ def print_summary(values):
         print(f"# Days to Sell  : {value['# Days to sell']}")
         print("-" * 40)
 
-def profit_distribution(df: pd.DataFrame, title: str = "Profit Distribution"):
-    """
-    Visualize the distribution of profit using a histogram.
 
-    :param df: The input DataFrame containing the 'Profit' column.
-    :param title: The title for the plot.
+def profit_distribution(df):
     """
-    plt.figure(figsize=(10, 6))
-    sns.histplot(df['Profit'], kde=True, bins=50, color='blue')
-    plt.title(title)
-    plt.xlabel('Profit ($)')
-    plt.ylabel('Number of Items')
-    plt.tight_layout()
-    plt.show()
+    Generate a histogram to visualize the distribution of profit.
+
+    :param df: DataFrame containing a 'Profit' column with numeric data.
+    :return: Plotly histogram figure object.
+    """
+    fig = px.histogram(
+        df,
+        x='Profit',
+        nbins=50,
+        title='Profit Distribution',
+        marginal='box',
+        color_discrete_sequence=['blue']
+    )
+
+    fig.update_layout(
+        xaxis_title='Profit ($)',
+        yaxis_title='Number of Items',
+        bargap=0.1  # Reduce gap between bars for better visualization
+    )
+
+    return fig
+
 
 def sale_price_vs_profit(df):
     """
-    Generate a scatterplot showing the relationship between sale price and profit.
+    Create a scatterplot showing the relationship between sale price and profit.
 
-    :param df: The input DataFrame containing sale price, profit, and condition of items.
+    :param df: DataFrame with items' sale prices, profits, and conditions.
+    :return: Plotly scatterplot figure object.
     """
-    plt.figure(figsize=(10, 6))
-    sns.scatterplot(x='Sale Price', y='Profit', data=df, hue='Condition', palette='coolwarm')
-    plt.title('Sale Price vs. Profit')
-    plt.xlabel('Sale Price ($)')
-    plt.ylabel('Profit ($)')
-    plt.tight_layout()
-    plt.show()
+    fig = px.scatter(
+        df,
+        x='Sale Price',
+        y='Profit',
+        color='Condition',
+        title='Sale Price vs. Profit',
+        labels={'Sale Price': 'Sale Price ($)', 'Profit': 'Profit ($)'},
+        hover_data=['Item', 'Condition', 'Purchase Date', 'Purchase Cost', 'Sale Date', 'Sale Price']
+    )
+
+    # Adjust marker properties for better aesthetics
+    fig.update_traces(marker=dict(size=8, opacity=0.7), selector=dict(mode='markers'))
+    return fig
+
 
 def sales_by_condition(df):
     """
-    Create a boxplot showing the distribution of sales prices by item condition.
+    Create a boxplot displaying sales prices grouped by item condition.
 
-    :param df: The input DataFrame containing sale price and item condition.
+    :param df: DataFrame containing sale prices and item conditions.
+    :return: Plotly boxplot figure object.
     """
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Condition', data=df, y='Sale Price', hue='Condition', palette='coolwarm')
-    plt.title('Sales by Condition')
-    plt.xlabel('Condition')
-    plt.ylabel('Sale Price ($)')
-    plt.tight_layout()
-    plt.show()
+    fig = px.box(
+        df,
+        x='Condition',
+        y='Sale Price',
+        title='Sales by Condition',
+        labels={'Sale Price': 'Sale Price ($)'},
+        color_discrete_sequence=px.colors.sequential.Plasma
+    )
+
+    return fig
+
 
 def days_to_sell_distribution(df):
     """
-    Plot the distribution of the number of days it took to sell items.
+    Visualize the distribution of the number of days items took to sell.
 
-    :param df: The input DataFrame containing purchase and sale dates.
+    :param df: DataFrame with purchase and sale dates.
+    :return: Plotly histogram figure object.
     """
-    # Add a column to the DataFrame for days to sell
+    # Add a column for days to sell, calculated using the helper function
     df['# Days to sell'] = df.apply(
         lambda row: calculate_date_difference(row['Purchase Date'], row['Sale Date']),
         axis=1
     )
-    plt.figure(figsize=(10, 6))
-    sns.histplot(df['# Days to sell'], kde=True, bins=50, color='green')
-    plt.title('Days to Sell Distribution')
-    plt.xlabel('# Days to Sell')
-    plt.ylabel('Number of Items')
-    plt.tight_layout()
-    plt.show()
+
+    fig = px.histogram(
+        df,
+        x='# Days to sell',
+        nbins=50,
+        title='Days to Sell Distribution',
+        marginal='box',
+        color_discrete_sequence=['blue']
+    )
+
+    fig.update_layout(
+        xaxis_title='Days to Sell',
+        yaxis_title='Number of Items',
+        bargap=0.1
+    )
+
+    return fig
+
 
 def avg_profit_by_purchase_range(df):
     """
-    Plot average profit for different purchase cost ranges.
+    Generate a bar chart showing average profit for purchase cost ranges.
 
-    :param df: The input DataFrame containing purchase cost and profit details.
+    :param df: DataFrame containing 'Purchase Cost' and 'Profit' columns.
+    :return: Plotly bar chart figure object.
     """
-    bin_edges = np.histogram_bin_edges(df['Purchase Cost'], bins=20)
+    df = df.copy()  # Avoid modifying the original DataFrame
+    bin_edges = np.histogram_bin_edges(df['Purchase Cost'].dropna(), bins=20)
     df['Cost Range'] = pd.cut(df['Purchase Cost'], bins=bin_edges, include_lowest=True)
+
+    # Convert the interval (Cost Range) to string for JSON serialization
+    df['Cost Range'] = df['Cost Range'].astype(str)
 
     avg_profit = df.groupby('Cost Range')['Profit'].mean().reset_index()
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='Cost Range', y='Profit', data=avg_profit)
-    plt.title('Average Profit by Purchase Range')
-    plt.xlabel('Purchase Cost Range')
-    plt.ylabel('Average Profit ($)')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    fig = px.bar(
+        avg_profit,
+        x='Cost Range',
+        y='Profit',
+        title='Average Profit by Purchase Range',
+        labels={'Profit': 'Average Profit ($)'},
+        color_discrete_sequence=px.colors.sequential.Plasma
+    )
+
+    fig.update_layout(xaxis_tickangle=-45)  # Rotate x-axis labels for readability
+
+    return fig
+
 
 def monthly_profit_over_time(df):
     """
-    Plot total profit over time aggregated by month.
+    Plot the total profit aggregated by month.
 
-    :param df: The input DataFrame containing sale dates and profit.
+    :param df: DataFrame with 'Sale Date' and 'Profit' columns.
+    :return: Plotly line chart figure object.
     """
-    # Ensure 'Sale Date' is in datetime format
+    # Ensure the 'Sale Date' column is in datetime format
     df['Sale Date'] = pd.to_datetime(df['Sale Date'], errors='coerce')
-    df = df.dropna(subset=['Sale Date'])  # Drop rows with invalid/missing Sale Dates
+    df = df.dropna(subset=['Sale Date'])  # Remove rows with invalid 'Sale Date'
 
-    # Group by month and sum profits
+    # Group by month and calculate total profit
     profit = df.groupby(df['Sale Date'].dt.to_period('M'))['Profit'].sum().reset_index()
     profit['Sale Date'] = profit['Sale Date'].dt.to_timestamp()
 
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(x='Sale Date', y='Profit', data=profit, marker='o')
-    plt.title('Total Profit Over Time')
-    plt.xlabel('Month')
-    plt.ylabel('Total Profit ($)')
-    plt.tight_layout()
-    plt.show()
+    fig = px.line(
+        profit,
+        x='Sale Date',
+        y='Profit',
+        title='Profit Over Time',
+        labels={'Profit': 'Total Profit ($)'},
+        markers=True
+    )
 
-def process_dataframe(df: pd.DataFrame) -> None:
+    return fig
+
+
+def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Perform various processing steps on the input DataFrame, including:
-      - Cleaning and filtering data
-      - Computing metrics like profit, average costs, and sale durations
-      - Printing a financial summary of the cleaned data
+    Process the raw dataset to clean, filter, and calculate metrics.
 
-    :param df: Input Pandas DataFrame containing raw pricing data.
+    :param df: Raw Pandas DataFrame with pricing and sale details.
+    :return: Processed DataFrame.
     """
-    # Extract the first item's identifier for context
-    item = df.at[0, 'Item']
-    print(f"Processing data for item: {item}\n")
-
-    # Step 1: Print initial (raw) data
-    print("Initial data (including scrap items):")
-    print(df, "\n")
-
-    # Step 2: Filter out scrap items for cleaner data
+    # Step 1: Filter out 'SCRP' (scrap) items from the dataset
     filtered_df = df[df['So Condition'] != 'SCRP'].copy()
-    print("Data after filtering scrap items:")
-    print(filtered_df, "\n")
 
-    # Step 3: Calculate '# Days to Sell' for each item
+    # Step 2: Calculate '# Days to Sell' for each item
     filtered_df['# Days to sell'] = filtered_df.apply(
         lambda row: calculate_date_difference(row['Purchase Date'], row['Sale Date']),
         axis=1
     )
-    print("Data with '# Days to sell' calculated:")
-    print(filtered_df, "\n")
 
-    # Additional metrics and visualizations are generated through specific functions
+    return filtered_df
+
 
 def output_graphs(df: pd.DataFrame):
-    profit_distribution(df)  # Generate relevant visualizations
-    sale_price_vs_profit(df)
-    sales_by_condition(df)
-    days_to_sell_distribution(df)
-    avg_profit_by_purchase_range(df)
-    monthly_profit_over_time(df)
+    """
+    Generate and display various visualizations from the dataset.
+
+    :param df: Processed DataFrame containing relevant columns for analysis.
+    """
+    # Call each graph function sequentially and display the outputs
+    profit_distribution(df).show()
+    sale_price_vs_profit(df).show()
+    sales_by_condition(df).show()
+    days_to_sell_distribution(df).show()
+    avg_profit_by_purchase_range(df).show()
+    monthly_profit_over_time(df).show()
+
 
 def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
     """
-    Main entry point for reading an Excel file, processing data, and printing or visualizing outputs.
+    Main function to load, process, and visualize data from an Excel file.
 
-    :param filepath: The file path to the Excel file containing raw pricing data.
+    :param filepath: File path to the Excel file containing raw data.
+    :return: Processed DataFrame with relevant metrics.
     """
-    # Load and process the Excel file
+    # Load the Excel file and process the data
     df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
-    process_dataframe(df)  # Perform main data processing steps
-    # output_graphs(df)
-    return df
+    filtered_df = process_dataframe(df)
+    output_graphs(filtered_df)  # Generate and display visualizations
+    return filtered_df
 
-# Entry point for executing the script
+
+# Script execution starts here
 generate_financial_summary()
