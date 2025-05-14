@@ -256,7 +256,7 @@ def output_graphs(df: pd.DataFrame):
     monthly_profit_over_time(df).show()
 
 
-def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
+def filter_data(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
     """
     Main function to load, process, and visualize data from an Excel file.
 
@@ -264,11 +264,7 @@ def generate_financial_summary(filepath: str = os.getenv('TEST_FILE') + '.xlsx')
     :return: Processed DataFrame with relevant metrics.
     """
     # Load the Excel file and process the data
+    # noinspection PyTypeChecker
     df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
     filtered_df = process_dataframe(df)
-    output_graphs(filtered_df)  # Generate and display visualizations
     return filtered_df
-
-
-# Script execution starts here
-generate_financial_summary()
