@@ -354,7 +354,14 @@ def format_excel_file(excel_file):
         wb = copy_data(original_wb)
 
         # process workbook
-        process_workbook(wb)
+        processed_workbook = process_workbook(wb)
+
+        # Save to temp file
+        import tempfile
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+        processed_workbook.save(temp_file.name)
+
+        return temp_file.name
 
     except Exception as e:
         print(f"Error occurred: {e}")
