@@ -1,6 +1,6 @@
 from dash import Dash, html, dcc, Output, Input
 
-from Price_History import (
+from Pricing.Price_History import (
     filter_data,  # Function to filter and preprocess data
     profit_distribution,  # Function to create a profit distribution graph
     sale_price_vs_profit,  # Function to create a graph for sale price vs profit
@@ -9,6 +9,8 @@ from Price_History import (
     avg_profit_by_purchase_range,  # Function to create graph for avg profit by purchase range
     monthly_profit_over_time  # Function to create a profit-over-time graph
 )
+
+# TODO: integrate pricing, excel module, and ebay scraping in one all encompassing dashboard app
 
 # Initialize Dash app
 app = Dash()
