@@ -66,7 +66,7 @@ def create_table(sheet):
     table_range = f'A1:{get_column_letter(max_column)}{max_row}'
 
     # create table with data range
-    table = Table(displayName=f'Table_{sheet.title.replace(' ', '')}', ref=table_range)
+    table = Table(displayName=f'Table_{sheet.title.replace(" ", "")}', ref=table_range)
     sheet.add_table(table)
 
 
@@ -165,46 +165,45 @@ def apply_conditional_formatting(sheet, sheet_name):
         )
 
     # apply empty cell formatting
-    match sheet_name:
-        case "Desktops" | "Laptops":
-            check_empty_range = f'$J2:$R{max_row}'
-        case "Networking":
-            check_empty_range = f'$J2:$O{max_row}'
-        case "Servers":
-            check_empty_range = f'$J2:$X{max_row}'
-        case _:
-            check_empty_range = f'$J2:$O{max_row}'  # defaults to smallest range
+    if sheet_name in ["Desktops", "Laptops"]:
+        check_empty_range = f'$J2:$R{max_row}'
+    elif sheet_name == "Networking":
+        check_empty_range = f'$J2:$O{max_row}'
+    elif sheet_name == "Servers":
+        check_empty_range = f'$J2:$X{max_row}'
+    else:
+        check_empty_range = f'$J2:$O{max_row}'  # defaults to smallest range
 
     check_no_attribute(sheet, check_empty_range)
 
 
-# def FOR_TESTING_convert_to_JSON(workbook):
-#     """Converts workbook object to JSON and returns JSON data"""
-#
-#     try:
-#         json_data = []
-#         for sheet in workbook.worksheets:
-#             # create dictionary for each sheet with sheet name and data
-#             sheet_data = {'sheet_name': sheet.title, 'data': []}
-#             # get headers from first row of sheet and store in list
-#             headers = [cell.value for cell in sheet[1]]
-#
-#             # loop through each row in sheet (skipping headers) and store data in list of dictionaries
-#             # values_only=True ensures that only values are returned and not cell objects
-#             for row in sheet.iter_rows(min_row=2, values_only=True):
-#                 # create dictionary for each row with header and value
-#                 row_data = {header: value for header, value in zip(headers, row)}
-#                 sheet_data['data'].append(row_data)
-#
-#             # append sheet data to json_data list
-#             json_data.append(sheet_data)
-#
-#         # convert json_data to JSON string and return
-#         return json.dumps(json_data)
-#
-#     except Exception as e:
-#         print(f"Error converting to JSON: {e}")
-#         raise
+def FOR_TESTING_convert_to_JSON(workbook):
+    """Converts workbook object to JSON and returns JSON data"""
+
+    try:
+        json_data = []
+        for sheet in workbook.worksheets:
+            # create dictionary for each sheet with sheet name and data
+            sheet_data = {'sheet_name': sheet.title, 'data': []}
+            # get headers from first row of sheet and store in list
+            headers = [cell.value for cell in sheet[1]]
+
+            # loop through each row in sheet (skipping headers) and store data in list of dictionaries
+            # values_only=True ensures that only values are returned and not cell objects
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                # create dictionary for each row with header and value
+                row_data = {header: value for header, value in zip(headers, row)}
+                sheet_data['data'].append(row_data)
+
+            # append sheet data to json_data list
+            json_data.append(sheet_data)
+
+        # convert json_data to JSON string and return
+        return json.dumps(json_data)
+
+    except Exception as e:
+        print(f"Error converting to JSON: {e}")
+        raise
 
 
 def format_JSON_data(data):
