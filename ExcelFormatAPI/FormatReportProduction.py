@@ -1,5 +1,5 @@
 import json
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill, Border, Side, Alignment
 from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import Rule
@@ -116,8 +116,6 @@ def apply_conditional_formatting(sheet, sheet_name):
     # store headers in list to prevent repeated indexing
     headers = [sheet.cell(row=1, column=col).value for col in range(1, sheet.max_column + 1)]
 
-    # TODO implement header row that way no need to index everytime
-
     # create rule specific to dash inventory sheet
     if sheet_name == 'Dash Inventory':
         scrap = Rule(
@@ -180,33 +178,33 @@ def apply_conditional_formatting(sheet, sheet_name):
     check_no_attribute(sheet, check_empty_range)
 
 
-def FOR_TESTING_convert_to_JSON(workbook):
-    """Converts workbook object to JSON and returns JSON data"""
-
-    try:
-        json_data = []
-        for sheet in workbook.worksheets:
-            # create dictionary for each sheet with sheet name and data
-            sheet_data = {'sheet_name': sheet.title, 'data': []}
-            # get headers from first row of sheet and store in list
-            headers = [cell.value for cell in sheet[1]]
-
-            # loop through each row in sheet (skipping headers) and store data in list of dictionaries
-            # values_only=True ensures that only values are returned and not cell objects
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                # create dictionary for each row with header and value
-                row_data = {header: value for header, value in zip(headers, row)}
-                sheet_data['data'].append(row_data)
-
-            # append sheet data to json_data list
-            json_data.append(sheet_data)
-
-        # convert json_data to JSON string and return
-        return json.dumps(json_data)
-
-    except Exception as e:
-        print(f"Error converting to JSON: {e}")
-        raise
+# def FOR_TESTING_convert_to_JSON(workbook):
+#     """Converts workbook object to JSON and returns JSON data"""
+#
+#     try:
+#         json_data = []
+#         for sheet in workbook.worksheets:
+#             # create dictionary for each sheet with sheet name and data
+#             sheet_data = {'sheet_name': sheet.title, 'data': []}
+#             # get headers from first row of sheet and store in list
+#             headers = [cell.value for cell in sheet[1]]
+#
+#             # loop through each row in sheet (skipping headers) and store data in list of dictionaries
+#             # values_only=True ensures that only values are returned and not cell objects
+#             for row in sheet.iter_rows(min_row=2, values_only=True):
+#                 # create dictionary for each row with header and value
+#                 row_data = {header: value for header, value in zip(headers, row)}
+#                 sheet_data['data'].append(row_data)
+#
+#             # append sheet data to json_data list
+#             json_data.append(sheet_data)
+#
+#         # convert json_data to JSON string and return
+#         return json.dumps(json_data)
+#
+#     except Exception as e:
+#         print(f"Error converting to JSON: {e}")
+#         raise
 
 
 def format_JSON_data(data):
@@ -263,102 +261,101 @@ def format_JSON_data(data):
         print(f"Error formatting JSON data: {e}")
         raise
 
-# from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
-# from openpxl import load_workbook
+from openpyxl.workbook.workbook import Workbook as OpenpyxlWorkbook
 
-# def copy_data(old_wb):
-#     """Copies data from original excel file and inserts into newly created file"""
-#
-#     # create new workbook
-#     wb = Workbook()
-#
-#     # remove default sheet from wb
-#     wb.remove(wb.active)
-#
-#     # copy all non empty sheets
-#     for sheet_name in old_wb.sheetnames:
-#         original_sheet = old_wb[sheet_name]
-#
-#         # skip empty sheets
-#         if is_sheet_empty(original_sheet):
-#             print(f'{sheet_name} is empty; skipping')
-#             continue
-#
-#         # create sheet in new workbook
-#         new_sheet = wb.create_sheet(title=sheet_name)
-#
-#         # copy data from old sheet to new sheet columnwise
-#         for col in original_sheet.iter_cols():
-#             if col[0].value == "Description":
-#                 for cell in col:
-#                     cleaned_value = clean_text(cell.value)
-#                     new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cleaned_value)
-#                     new_cell.border = BORDER
-#                     new_cell.alignment = ALIGNMENT
-#             else:
-#                 for cell in col:
-#                     new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cell.value)
-#                     new_cell.border = BORDER
-#                     new_cell.alignment = ALIGNMENT
-#     return wb
+def copy_data(old_wb):
+    """Copies data from original excel file and inserts into newly created file"""
 
-# def is_sheet_empty(sheet):
-#     """Checks if there is information present other than the header line"""
-#     if sheet.max_row == 1: # if only header is present, then sheet is empty
-#         return True
-#     return False
+    # create new workbook
+    wb = Workbook()
+
+    # remove default sheet from wb
+    wb.remove(wb.active)
+
+    # copy all non empty sheets
+    for sheet_name in old_wb.sheetnames:
+        original_sheet = old_wb[sheet_name]
+
+        # skip empty sheets
+        if is_sheet_empty(original_sheet):
+            print(f'{sheet_name} is empty; skipping')
+            continue
+
+        # create sheet in new workbook
+        new_sheet = wb.create_sheet(title=sheet_name)
+
+        # copy data from old sheet to new sheet columnwise
+        for col in original_sheet.iter_cols():
+            if col[0].value == "Description":
+                for cell in col:
+                    cleaned_value = clean_text(cell.value)
+                    new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cleaned_value)
+                    new_cell.border = BORDER
+                    new_cell.alignment = ALIGNMENT
+            else:
+                for cell in col:
+                    new_cell = new_sheet.cell(row=cell.row, column=cell.column, value=cell.value)
+                    new_cell.border = BORDER
+                    new_cell.alignment = ALIGNMENT
+    return wb
+
+def is_sheet_empty(sheet):
+    """Checks if there is information present other than the header line"""
+    if sheet.max_row == 1: # if only header is present, then sheet is empty
+        return True
+    return False
 
 
-# def process_workbook(workbook):
-#     """Processes workbook object and returns formatted workbook object"""
-#
-#     # check if valid workbook object was passed in
-#     try:
-#         if not isinstance(workbook, OpenpyxlWorkbook):
-#             raise TypeError("Could not process workbook.")
-#         print("Valid workbook with sheet names: ", workbook.sheetnames)
-#
-#         # copy data to new workbook
-#         wb = copy_data(workbook)
-#
-#         # go through each sheet in the workbook
-#         for sheet_name in wb.sheetnames:
-#             # get current sheet
-#             current_sheet = wb[sheet_name]
-#
-#             # create table
-#             create_table(current_sheet)
-#
-#             # apply orange fill to header row
-#             format_header(current_sheet)
-#
-#             # apply conditional formatting
-#             apply_conditional_formatting(current_sheet, sheet_name)
-#
-#             # "autofit" cells
-#             # can comment out for efficiency
-#             # has to loop through every single cell in each column to get longest string
-#             autofit(current_sheet)
-#
-#         return wb
-#
-#     except TypeError as e:
-#         print(f"Error occurred: {e}")
-#         raise
+def process_workbook(workbook):
+    """Processes workbook object and returns formatted workbook object"""
 
-# def format_excel_file(excel_file):
-#     """Formats passed in excel file and returns workbook object"""
-#     # parameter will be full excel file object
-#     try:
-#         # load workbook from file-like object
-#         original_wb = load_workbook(excel_file)
-#
-#         # copy data to new workbook
-#         wb = copy_data(original_wb)
-#
-#         # process workbook
-#         process_workbook(wb)
-#
-#     except Exception as e:
-#         print(f"Error occurred: {e}")
-#         raise
+    # check if valid workbook object was passed in
+    try:
+        if not isinstance(workbook, OpenpyxlWorkbook):
+            raise TypeError("Could not process workbook.")
+        print("Valid workbook with sheet names: ", workbook.sheetnames)
+
+        # copy data to new workbook
+        wb = copy_data(workbook)
+
+        # go through each sheet in the workbook
+        for sheet_name in wb.sheetnames:
+            # get current sheet
+            current_sheet = wb[sheet_name]
+
+            # create table
+            create_table(current_sheet)
+
+            # apply orange fill to header row
+            format_header(current_sheet)
+
+            # apply conditional formatting
+            apply_conditional_formatting(current_sheet, sheet_name)
+
+            # "autofit" cells
+            # can comment out for efficiency
+            # has to loop through every single cell in each column to get longest string
+            autofit(current_sheet)
+
+        return wb
+
+    except TypeError as e:
+        print(f"Error occurred: {e}")
+        raise
+
+def format_excel_file(excel_file):
+    """Formats passed in excel file and returns workbook object"""
+    # parameter will be full excel file object
+    try:
+        # load workbook from file-like object
+        original_wb = load_workbook(excel_file)
+
+        # copy data to new workbook
+        wb = copy_data(original_wb)
+
+        # process workbook
+        process_workbook(wb)
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        raise
