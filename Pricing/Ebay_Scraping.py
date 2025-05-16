@@ -116,10 +116,9 @@ def calculate_price_statistics(prices: list):
 
     return np.mean(filtered_prices), max(filtered_prices), min(filtered_prices)
 
-# TODO: implement function
-def scrape_ebay_data():
+def scrape_ebay_data(search=""):
     # Get user input
-    search = input('Enter search term: ').strip()
+    search = search.strip()
     if not search:
         print('No search term entered. Exiting.')
         sys.exit(1)

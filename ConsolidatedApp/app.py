@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 from dash import Dash, dcc, html
+from Pricing.Ebay_Scraping import scrape_ebay_data
 import dash
 import tempfile
 from Pricing.Price_History import (
@@ -105,6 +106,8 @@ def update_view(view_type, selected_graph):
 
     return None, None
 
+# TODO: account for weight, sellthrough (check how often it is sold)
+# TODO: check check server component prices and average out
 
 # ------------------------------ FLASK ROUTES ------------------------------
 
@@ -169,16 +172,19 @@ def download_file(filename):
 @app.route('/scrape-ebay', methods=['POST'])
 def scrape_ebay():
     """
-    Scrape eBay listings based on the provided search parameters.
-    (Currently expects JSON input; may need updates based on data format.)
+    Scrape eBay listings based on the provided search string.
 
     :return: Scraped data in JSON format.
     """
-    # TODO: Test functionality
-    # FIXME: Search still expects JSON, adapt if switching away.
-    data = request.json  # Assume JSON input with search parameters
-    result = scrape_ebay(data)  # Placeholder for scrape_ebay function
-    return jsonify({'scraped_data': result})
+    search_query = request.get_data(as_text=True)  # Get raw string from request body
+    if not search_query:
+        return jsonify({'error': 'No search query provided'}), 400
+
+    try:
+        result = scrape_ebay_data(search_query)  # Pass raw search string to scraper
+        return jsonify({'scraped_data': result})
+    except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 
 @app.route('/')
