@@ -124,7 +124,7 @@ def scrape_ebay_data():
         print('No search term entered. Exiting.')
         sys.exit(1)
 
-    pages = int(input('Enter number of pages to scrape (default: 2): '))
+    pages = int(input('Enter number of pages to scrape (default: 2): ') or 2)
     open_page = input('Open webpage? (y/n): ').strip().lower()
 
     match open_page:
