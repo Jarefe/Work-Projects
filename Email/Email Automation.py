@@ -112,6 +112,7 @@ def generate_email(num_passed: int, num_failed: int, num_no_drives: int, added: 
     email.subject = f'{PO} ER Batch #{batch_number} for {num_devices} {device}'
 
     email.Attachments.Add(ATTACHMENT)
+    cleaned = serial_numbers_html.strip() if serial_numbers_html else ''
 
     body = f'''
     <html>
@@ -121,7 +122,7 @@ def generate_email(num_passed: int, num_failed: int, num_no_drives: int, added: 
         <span>{num_failed} | <font color='red'>Failed</font></span><br>
         <br>
         <span>PDR | {added}</span><br> 
-        {serial_numbers_html.strip()}
+        {cleaned}
       </body>
     </html>
     '''
