@@ -42,108 +42,193 @@
             width: 100%;
             height: 800px;
             border: none;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <h1>All-In-One Dashboard</h1>
+<h1>All-In-One Dashboard</h1>
 
-    <!-- Section 1: Dash Pricing Dashboard -->
-    <div class="section">
-        <h2>📊 Pricing Dashboard</h2>
-        <p>Explore financial summaries and profit metrics from historical pricing data.</p>
-        <a href="/dash/" target="_blank">
-            <button>Open Pricing Dashboard</button>
-        </a>
-    </div>
+<!-- Section 1: Dash Pricing Dashboard -->
+<div class="section">
+    <h2>📊 Pricing Dashboard</h2>
+    <p>Explore financial summaries and profit metrics from historical pricing data.</p>
 
-    <!-- Section 2: Excel Formatter -->
-    <div class="section">
-        <h2>📁 Excel Formatter</h2>
-        <p>Upload a raw Excel file to format it into a clean reporting layout and download the result.</p>
-        <form id="excel-form">
-            <input type="file" name="file" required>
-            <button type="submit">Format Excel File</button>
-        </form>
-        <div id="excel-output" style="margin-top: 20px;"></div>
-    </div>
+    <iframe id="dash-frame" src="/dash/"></iframe>
 
-    <script>
-        document.getElementById("excel-form").addEventListener("submit", async function (e) {
-            e.preventDefault();
+    <hr style="margin: 20px 0;">
 
-            const formData = new FormData();
-            const fileInput = e.target.querySelector("input[type='file']");
-            const outputDiv = document.getElementById("excel-output");
+    <form id="pricing-history-form">
+        <label><strong>Upload Pricing History Excel File:</strong></label>
+        <input type="file" name="pricing_file" required>
+        <button type="submit">Upload Pricing History</button>
+    </form>
 
-            if (fileInput.files.length < 1) {
-                outputDiv.innerHTML = "<p style='color: red;'>Please upload a file before submitting.</p>";
-                return;
+    <form id="second-excel-form" style="margin-top: 20px;">
+        <label><strong>Upload Second Excel File (TBD):</strong></label>
+        <input type="file" name="second_file" required>
+        <button type="submit">Upload Second File</button>
+    </form>
+
+    <div id="pricing-upload-output" style="margin-top: 20px;"></div>
+</div>
+
+<!-- Section 2: Excel Formatter -->
+<div class="section">
+    <h2>📁 Excel Formatter</h2>
+    <p>Upload a raw Excel file to format it into a clean reporting layout and download the result.</p>
+    <form id="excel-form">
+        <input type="file" name="file" required>
+        <button type="submit">Format Excel File</button>
+    </form>
+    <div id="excel-output" style="margin-top: 20px;"></div>
+</div>
+
+<!-- Section 3: eBay Scraper -->
+<div class="section">
+    <h2>🔍 eBay Scraper</h2>
+    <p>Enter search parameters to scrape eBay listings (e.g., model, SKU).</p>
+    <form id="scraper-form">
+        <textarea name="query" placeholder="Enter search string..." rows="5" required></textarea>
+        <button type="submit">Scrape eBay</button>
+    </form>
+    <div id="scraper-output"></div>
+</div>
+
+<!-- JS: Excel Formatter Upload -->
+<script>
+    document.getElementById("excel-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const fileInput = e.target.querySelector("input[type='file']");
+        const outputDiv = document.getElementById("excel-output");
+
+        if (fileInput.files.length < 1) {
+            outputDiv.innerHTML = "<p style='color: red;'>Please upload a file before submitting.</p>";
+            return;
+        }
+
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch("/format-excel", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to process the file.");
             }
 
-            formData.append("file", fileInput.files[0]);
+            const data = await response.json();
 
-            try {
-                // Send file to the server
-                const response = await fetch("/format-excel", {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to process the file.");
-                }
-
-                const data = await response.json();
-
-                // Check if download link is available
-                if (data.download_link) {
-                    outputDiv.innerHTML = `
-                    <p style="color: green;">File processed successfully! <a href="${data.download_link}" target="_blank" download>Click here to download</a></p>
+            if (data.download_link) {
+                outputDiv.innerHTML = `
+                    <p style="color: green;">File processed successfully!
+                    <a href="${data.download_link}" target="_blank" download>Click here to download</a></p>
                 `;
-                } else if (data.error) {
-                    outputDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
-                }
-            } catch (err) {
-                // Display error message
-                outputDiv.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+            } else if (data.error) {
+                outputDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
             }
-        });
-    </script>
+        } catch (err) {
+            outputDiv.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+        }
+    });
+</script>
 
-    <!-- Section 3: eBay Scraper -->
-    <div class="section">
-        <h2>🔍 eBay Scraper</h2>
-        <p>Enter search parameters to scrape eBay listings (e.g., model, SKU).</p>
-        <form id="scraper-form">
-            <textarea name="query" placeholder="Enter search string..." rows="5" required></textarea>
-            <button type="submit">Scrape eBay</button>
-        </form>
-        <div id="scraper-output"></div>
-    </div>
+<!-- JS: eBay Scraper -->
+<script>
+    document.getElementById("scraper-form").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const query = e.target.query.value;
 
-    <script>
-        document.getElementById("scraper-form").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const query = e.target.query.value; // Retrieves the plain string entered by the user
+        try {
+            const response = await fetch("/scrape-ebay", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain"
+                },
+                body: query
+            });
 
-            try {
-                const response = await fetch("/scrape-ebay", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain" // Content type updated to text/plain
-                    },
-                    body: query // Sends the plain string directly
-                });
+            const result = await response.json();
+            document.getElementById("scraper-output").innerText = JSON.stringify(result, null, 2);
+        } catch (err) {
+            document.getElementById("scraper-output").innerText = "Error: " + err.message;
+        }
+    });
+</script>
 
-                const result = await response.json(); // Assumes the server responds with JSON
-                document.getElementById("scraper-output").innerText = JSON.stringify(result, null, 2); // Formats and displays server response
-            } catch (err) {
-                document.getElementById("scraper-output").innerText = "Error: " + err.message;
+<!-- JS: Pricing Dashboard File Uploads -->
+<script>
+    document.getElementById("pricing-history-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = e.target.querySelector("input[type='file']");
+        const outputDiv = document.getElementById("pricing-upload-output");
+
+        if (fileInput.files.length < 1) {
+            outputDiv.innerHTML = "<p style='color: red;'>Please select a pricing history file.</p>";
+            return;
+        }
+
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch("/upload-pricing-history", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                outputDiv.innerHTML = "<p style='color: green;'>Pricing history uploaded successfully.</p>";
+
+                // Reload the Dash iframe to reflect updated data
+                const iframe = document.getElementById("dash-frame");
+                iframe.src = iframe.src;
+            } else {
+                outputDiv.innerHTML = `<p style='color: red;'>Error: ${result.error}</p>`;
             }
-        });
-    </script>
+        } catch (err) {
+            outputDiv.innerHTML = `<p style='color: red;'>Upload failed: ${err.message}</p>`;
+        }
+    });
+
+    document.getElementById("second-excel-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = e.target.querySelector("input[type='file']");
+        const outputDiv = document.getElementById("pricing-upload-output");
+
+        if (fileInput.files.length < 1) {
+            outputDiv.innerHTML = "<p style='color: red;'>Please select the second Excel file.</p>";
+            return;
+        }
+
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch("/upload-second-excel", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                outputDiv.innerHTML = "<p style='color: green;'>Second Excel file uploaded successfully.</p>";
+            } else {
+                outputDiv.innerHTML = `<p style='color: red;'>Error: ${result.error}</p>`;
+            }
+        } catch (err) {
+            outputDiv.innerHTML = `<p style='color: red;'>Upload failed: ${err.message}</p>`;
+        }
+    });
+</script>
 
 </body>
 </html>

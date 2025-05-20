@@ -4,7 +4,7 @@ from Pricing.Ebay_Scraping import scrape_ebay_data
 import dash
 import tempfile
 from Pricing.Price_History import (
-    filter_data, profit_distribution, sale_price_vs_profit, sales_by_condition,
+    process_pricing_history, profit_distribution, sale_price_vs_profit, sales_by_condition,
     days_to_sell_distribution, avg_profit_by_purchase_range, monthly_profit_over_time
 )
 from ExcelFormatAPI.FormatReportProduction import format_excel_file
@@ -27,7 +27,8 @@ dash_app = Dash(
 
 # Load and preprocess pricing data
 # NOTE: Replace "filter_data" with a dynamic user-uploaded Excel file and process it for Dash charts
-df = filter_data()
+df_holder = {'df': process_pricing_history()}
+
 
 # Dictionary that maps graph names to corresponding generation functions
 graph_functions = {
@@ -41,7 +42,12 @@ graph_functions = {
 
 # Define the layout of the Dash app
 dash_app.layout = html.Div([
-    html.H1(f"Financial Summary of Item {df['Item'].iloc[1]}", style={'textAlign': 'center'}),
+    html.H1(
+        f"Financial Summary" + (
+            f" of Item {df_holder['df']['Item'].iloc[1]}" if df_holder['df'] is not None and 'Item' in df_holder['df'].columns and len(df_holder['df']) > 1 else ""
+        ),
+        style={'textAlign': 'center'}
+    ),
 
     html.Div([
         html.Label("Select View"),
@@ -51,7 +57,7 @@ dash_app.layout = html.Div([
                 {"label": "Dropdown", "value": "dropdown"},
                 {"label": "All", "value": "all"}
             ],
-            value="dropdown",  # Default selection is "Dropdown"
+            value="dropdown",
             labelStyle={"display": "inline-block", 'margin-right': '10px'}
         )
     ], style={'margin-bottom': '10px'}),
@@ -64,8 +70,9 @@ dash_app.layout = html.Div([
         )
     ], id='dropdown-container', style={'width': '50%', 'margin': '0 auto'}),
 
-    html.Div(id='graph-container'),
+    html.Div(id='graph-container', children=html.P("No data loaded. Please upload a pricing history file."))
 ])
+
 
 
 @dash_app.callback(
@@ -81,17 +88,16 @@ dash_app.layout = html.Div([
 def update_view(view_type, selected_graph):
     """
     Update the layout of the Dash app based on the user's selection.
-
-    :param view_type: The type of layout ('dropdown' or 'all').
-    :param selected_graph: The name of the graph selected from the dropdown.
-    :return: Layout updates: dropdown visibility and graph data.
     """
+    df = df_holder.get('df')
+    if df is None or df.empty:
+        return {'display': 'none'}, html.P("No data available. Upload a file to see graphs.")
+
     if view_type == 'dropdown':
         dropdown_style = {'width': '50%', 'margin': '0 auto', 'display': 'block'}
         selected_func = graph_functions[selected_graph]
-        fig = selected_func(df)  # Generate the graph using the selected function
-        graph = dcc.Graph(figure=fig)
-        return dropdown_style, graph
+        fig = selected_func(df)
+        return dropdown_style, dcc.Graph(figure=fig)
 
     elif view_type == 'all':
         dropdown_style = {'display': 'none'}
@@ -104,24 +110,13 @@ def update_view(view_type, selected_graph):
         ]
         return dropdown_style, all_graphs
 
-    return None, None
+    return {'display': 'none'}, html.P("Unknown view type selected.")
+
 
 # TODO: account for weight, sellthrough (check how often it is sold)
 # TODO: check check server component prices and average out
 
 # ------------------------------ FLASK ROUTES ------------------------------
-
-
-@app.route('/pricing')
-def pricing():
-    """
-    Serve the pricing dashboard page.
-
-    :return: Pricing dashboard page (HTML template).
-    """
-    return render_template('pricing.html')
-
-
 @app.route('/format-excel', methods=['POST'])
 def format_excel():
     """
@@ -195,6 +190,40 @@ def home():
     :return: Rendered homepage template (HTML).
     """
     return render_template('index.html')
+
+@app.route('/upload-pricing-history', methods=['POST'])
+def upload_pricing_history():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    try:
+        # Save to a temporary file so filter_data() can work on it
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+        file.save(temp_file.name)
+
+        # Call filter_data with the file path if it supports input files
+        df_holder['df'] = process_pricing_history(temp_file.name)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/upload-second-excel', methods=['POST'])
+def upload_second_excel():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    try:
+        # TODO: Process the uploaded second Excel file
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 # ------------------------------ MAIN ------------------------------

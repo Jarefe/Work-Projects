@@ -1,5 +1,4 @@
 # Import required libraries and modules
-import os
 from datetime import datetime
 import plotly.express as px
 import numpy as np
@@ -256,7 +255,7 @@ def output_graphs(df: pd.DataFrame):
     monthly_profit_over_time(df).show()
 
 
-def filter_data(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
+def process_pricing_history(filepath: str = None):
     """
     Main function to load, process, and visualize data from an Excel file.
 
@@ -265,6 +264,11 @@ def filter_data(filepath: str = os.getenv('TEST_FILE') + '.xlsx'):
     """
     # Load the Excel file and process the data
     # noinspection PyTypeChecker
-    df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
-    filtered_df = process_dataframe(df)
-    return filtered_df
+    if filepath is not None:
+        try:
+            df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
+            filtered_df = process_dataframe(df)
+            return filtered_df
+        except Exception as e:
+            return e
+    return None

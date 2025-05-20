@@ -1,7 +1,7 @@
 from dash import Dash, html, dcc, Output, Input
 
 from Pricing.Price_History import (
-    filter_data,  # Function to filter and preprocess data
+    process_pricing_history,  # Function to filter and preprocess data
     profit_distribution,  # Function to create a profit distribution graph
     sale_price_vs_profit,  # Function to create a graph for sale price vs profit
     sales_by_condition,  # Function to create a graph for sales by condition
@@ -16,7 +16,7 @@ from Pricing.Price_History import (
 app = Dash()
 
 # Load preprocessed data from Price_History module
-df = filter_data()
+df = process_pricing_history()
 
 # Dictionary mapping graph names to their respective functions
 graph_functions = {
