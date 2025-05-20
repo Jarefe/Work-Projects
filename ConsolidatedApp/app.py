@@ -177,7 +177,7 @@ def scrape_ebay():
 
     try:
         result = scrape_ebay_data(search_query)  # Pass raw search string to scraper
-        return jsonify({'scraped_data': result})
+        return jsonify({'results': result})
     except Exception as e:
             return jsonify({'error': str(e)}), 500
 

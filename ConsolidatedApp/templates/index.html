@@ -44,6 +44,27 @@
             border: none;
             margin-top: 20px;
         }
+        #scraper-output p {
+            margin-bottom: 0.5em;
+        }
+        #scraper-output a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        #scraper-output a:hover {
+            text-decoration: underline;
+        }
+        details summary {
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -69,7 +90,7 @@
         <textarea name="query" placeholder="Enter search string..." rows="5" required></textarea>
         <button type="submit">Scrape eBay</button>
     </form>
-    <div id="scraper-output"></div>
+    <div id="scraper-output" style="margin-top: 20px;"></div>
 </div>
 
 <!-- Section 3: Dash Pricing Dashboard -->
@@ -94,7 +115,6 @@
     <iframe id="dash-frame" src="/dash/"></iframe>
 
     <hr style="margin: 20px 0;">
-
 </div>
 
 <!-- JS: Excel Formatter Upload -->
@@ -119,10 +139,6 @@
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to process the file.");
-            }
-
             const data = await response.json();
 
             if (data.download_link) {
@@ -144,6 +160,7 @@
     document.getElementById("scraper-form").addEventListener("submit", async function(e) {
         e.preventDefault();
         const query = e.target.query.value;
+        const outputDiv = document.getElementById("scraper-output");
 
         try {
             const response = await fetch("/scrape-ebay", {
@@ -155,9 +172,26 @@
             });
 
             const result = await response.json();
-            document.getElementById("scraper-output").innerText = JSON.stringify(result, null, 2);
+
+            if (result.results) {
+                outputDiv.innerHTML = `
+                    <h3>Results (with outliers removed):</h3>
+                    <p><strong>Average Price:</strong> $${result.results["average price"].toFixed(2)}</p>
+                    <p><strong>Highest Price:</strong> $${result.results["highest price"]}</p>
+                    <p><strong>Lowest Price:</strong> $${result.results["lowest price"]}</p>
+
+                    <p><strong>Total Listings Analyzed (unfiltered):</strong> ${result.results["prices"].length}</p>
+                    <p><a href="${result.results.url}" target="_blank">🔗 View eBay Search Results</a></p>
+                    <details>
+                        <summary>Show All Prices</summary>
+                        <pre>${JSON.stringify(result.results.prices, null, 2)}</pre>
+                    </details>
+                `;
+            } else if (result.error) {
+                outputDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+            }
         } catch (err) {
-            document.getElementById("scraper-output").innerText = "Error: " + err.message;
+            outputDiv.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
         }
     });
 </script>
@@ -199,7 +233,7 @@
         }
     });
 
-    document.getElementById("second-excel-form").addEventListener("submit", async function (e) {
+    document.getElementById("product-inventory-form").addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData();
         const fileInput = e.target.querySelector("input[type='file']");

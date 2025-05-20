@@ -1,10 +1,8 @@
-import sys
-
-import requests, re, webbrowser, numpy as np
+import requests, re, numpy as np
 from bs4 import BeautifulSoup
 
-def fetch_ebay_data(search: str, num_pages: int = 2):
-    '''Fetch eBay data for a given search term and number of pages'''
+def fetch_ebay_data(search: str, num_pages: int = 5):
+    """Fetch eBay data for a given search term and number of pages"""
     prices = []
     # TODO: try to get titles of ebay listings in addition to prices
     titles = []
@@ -76,9 +74,11 @@ def fetch_ebay_data(search: str, num_pages: int = 2):
 
 
 def remove_outliers(prices: list):
-    '''Remove outliers from a list of prices'''
+    """Remove outliers from a list of prices"""
     # Convert to numpy array
     prices = np.array(prices)
+    if len(prices) < 4:
+        return prices # Not enough to filter
     print(f'Unfiltered prices: {prices}')
 
     # Calculate Q1 & Q3 (25th and 75th percentile)
@@ -104,7 +104,7 @@ def remove_outliers(prices: list):
 
 
 def calculate_price_statistics(prices: list):
-    '''Calculate average price, highest price, and lowest price from a list of prices'''
+    """Calculate average price, highest price, and lowest price from a list of prices"""
     if len(prices) == 0:
         print('No data for search term')
         return None
@@ -120,29 +120,21 @@ def scrape_ebay_data(search=""):
     # Get user input
     search = search.strip()
     if not search:
-        print('No search term entered. Exiting.')
-        sys.exit(1)
+        raise ValueError("Empty search term.")
 
-    pages = int(input('Enter number of pages to scrape (default: 2): ') or 2)
-    open_page = input('Open webpage? (y/n): ').strip().lower()
-
-    match open_page:
-        case 'y':
-            webbrowser.open(f'https://www.ebay.com/sch/i.html?_nkw={search.replace(' ', '+')}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1')
-        case 'n':
-            print('Skipping webpage opening.')
-        case _:
-            print('Invalid input. Skipping webpage opening.')
+    url = f'https://www.ebay.com/sch/i.html?_nkw={search.replace(' ', '+')}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1'
 
     # Fetch eBay data
-    fetched_prices = fetch_ebay_data(search, pages)
+    fetched_prices = fetch_ebay_data(search)
     fetched_prices = fetched_prices[2:] # remove first 2 values which are not relevant to price info
 
     # Check if we have valid prices and compute the average price
-    if fetched_prices:
-        avg_price, highest_price, lowest_price = calculate_price_statistics(fetched_prices)
-        if avg_price is not None:
-            print(f'Prices: {fetched_prices}\n')
-            print(f'Average Price after removing outliers: {avg_price:.2f}')
-            print(f'Highest price after removing outliers: {highest_price:.2f}')
-            print(f'Lowest price after removing outliers: {lowest_price:.2f}')
+
+    avg_price, highest_price, lowest_price = calculate_price_statistics(fetched_prices)
+    return {
+        "url": url,
+        "average price": avg_price,
+        "highest price": highest_price,
+        "lowest price": lowest_price,
+        "prices": fetched_prices
+    }
