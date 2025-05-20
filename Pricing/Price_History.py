@@ -221,7 +221,7 @@ def monthly_profit_over_time(df):
     return fig
 
 
-def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+def process_pricing_history_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Process the raw dataset to clean, filter, and calculate metrics.
 
@@ -257,7 +257,7 @@ def output_graphs(df: pd.DataFrame):
 
 def process_pricing_history(filepath: str = None):
     """
-    Main function to load, process, and visualize data from an Excel file.
+    Main function to load, process, and visualize data from a pricing history excel file.
 
     :param filepath: File path to the Excel file containing raw data.
     :return: Processed DataFrame with relevant metrics.
