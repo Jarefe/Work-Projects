@@ -254,6 +254,20 @@ def output_graphs(df: pd.DataFrame):
     avg_profit_by_purchase_range(df).show()
     monthly_profit_over_time(df).show()
 
+def read_all_sheets(filepath: str = None) -> dict:
+    """
+    Reads all sheets from an Excel workbook and returns a dictionary of DataFrames.
+
+    :param filepath: Path to the Excel workbook (.xlsx or .xls).
+    :return: Dictionary where keys are sheet names and values are DataFrames.
+    """
+    try:
+        # Read all sheets into a dictionary
+        sheets_dict = pd.read_excel(filepath, sheet_name=None)
+        return sheets_dict
+    except Exception as e:
+        raise e
+
 
 def process_pricing_history(filepath: str = None):
     """
