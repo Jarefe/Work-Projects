@@ -85,13 +85,17 @@
 <!-- Section 2: eBay Scraper -->
 <div class="section">
     <h2>🔍 eBay Scraper</h2>
-    <p>Enter search parameters to scrape eBay listings (e.g., model, SKU).</p>
+    <p>Enter search parameters to scrape <u>sold</u> eBay listings (e.g., model, SKU).</p>
     <form id="scraper-form">
-        <textarea name="query" placeholder="Enter search string..." rows="5" required></textarea>
+        <textarea name="query" placeholder="Enter search string..." rows="3" required></textarea>
+        <label for="page-count"><strong>Number of Pages to Scrape:</strong></label>
+        <input type="number" id="page-count" name="pages" min="1" max="10" value="2" style="width: 100px; margin-bottom: 10px;">
+        <br>
         <button type="submit">Scrape eBay</button>
     </form>
     <div id="scraper-output" style="margin-top: 20px;"></div>
 </div>
+
 
 <!-- Section 3: Dash Pricing Dashboard -->
 <div class="section">
@@ -160,27 +164,33 @@
     document.getElementById("scraper-form").addEventListener("submit", async function(e) {
         e.preventDefault();
         const query = e.target.query.value;
+        const pageCount = e.target.pages.value;
+
+        const bodyData = JSON.stringify({
+            query: query,
+            pages: parseInt(pageCount) || 2
+        });
+
         const outputDiv = document.getElementById("scraper-output");
 
         try {
             const response = await fetch("/scrape-ebay", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "text/plain"
+                    "Content-Type": "application/json"
                 },
-                body: query
+                body: bodyData
             });
 
             const result = await response.json();
 
             if (result.results) {
                 outputDiv.innerHTML = `
-                    <h3>Results (with outliers removed):</h3>
+                    <h3>Results:</h3>
                     <p><strong>Average Price:</strong> $${result.results["average price"].toFixed(2)}</p>
                     <p><strong>Highest Price:</strong> $${result.results["highest price"]}</p>
                     <p><strong>Lowest Price:</strong> $${result.results["lowest price"]}</p>
-
-                    <p><strong>Total Listings Analyzed (unfiltered):</strong> ${result.results["prices"].length}</p>
+                    <p><strong>Total Listings Analyzed:</strong> ${result.results["prices"].length}</p>
                     <p><a href="${result.results.url}" target="_blank">🔗 View eBay Search Results</a></p>
                     <details>
                         <summary>Show All Prices</summary>
@@ -195,6 +205,7 @@
         }
     });
 </script>
+
 
 <!-- JS: Pricing Dashboard File Uploads -->
 <script>
