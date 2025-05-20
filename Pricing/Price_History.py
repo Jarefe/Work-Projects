@@ -266,8 +266,8 @@ def process_pricing_history(filepath: str = None):
     # noinspection PyTypeChecker
     if filepath is not None:
         try:
-            df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, K, L, N, O, R')
-            filtered_df = process_dataframe(df)
+            df = pd.read_excel(filepath, skiprows=[0], usecols='B, C, E, G, H, I, K, L, N, O, R')
+            filtered_df = process_pricing_history_dataframe(df)
             return filtered_df
         except Exception as e:
             return e
