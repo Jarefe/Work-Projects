@@ -270,19 +270,66 @@ def output_graphs(df: pd.DataFrame):
     avg_profit_by_purchase_range(df).show()
     monthly_profit_over_time(df).show()
 
+import pandas as pd
+
 def read_all_sheets(filepath: str = None) -> dict:
     """
-    Reads all sheets from an Excel workbook and returns a dictionary of DataFrames.
+    Reads specified sheets from an Excel workbook and returns a dictionary of processed DataFrames,
+    each processed based on its sheet name.
 
     :param filepath: Path to the Excel workbook (.xlsx or .xls).
     :return: Dictionary where keys are sheet names and values are DataFrames.
     """
+    SHEET_NAMES = {
+        "Dash Inventory",
+        "Desktops",
+        "Laptops",
+        "Networking",
+        "Servers"
+    }
+
+    # Define custom logic for each sheet
+    sheet_configs = {
+        "Dash Inventory": {"usecols": "A:I"},
+        "Desktops": {"usecols": "A:E,G:S,U"},
+        "Laptops": {"usecols": "A:E,G:S,U"},
+        "Networking": {"usecols": "A:E,G:P,R"},
+        "Servers": {"usecols": "A:E,G:Z,AB"}
+    }
+
+    sheets_dict = {}
+
     try:
-        # Read all sheets into a dictionary
-        sheets_dict = pd.read_excel(filepath, sheet_name=None)
+        for sheet_name in SHEET_NAMES:
+            if sheet_name in sheet_configs:
+                config = sheet_configs[sheet_name]
+                df = pd.read_excel(filepath, sheet_name=sheet_name, **config)
+
+                # Optional: Add custom cleaning logic here per sheet
+                # if sheet_name == "Laptops":
+                #     df.rename(columns={"Old Name": "New Name"}, inplace=True)
+
+                sheets_dict[sheet_name] = df
+
         return sheets_dict
+
     except Exception as e:
-        raise e
+        raise RuntimeError(f"Failed to read Excel file: {e}")
+
+
+def find_data_overlaps(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function to find data that exists in both sheets (will allow to pull pricing data and specs, then output as 1 dataframe with all relevant data for ML
+
+    :param df1: first dataframe to compare
+    :param df2: second dataframe to compare
+    :return: combined dataframe
+    """
+    combined_df = df1 # FIXME: only in place to suppress errors
+
+
+
+    return combined_df
 
 def process_pricing_history(filepath: str = None):
     """
@@ -342,7 +389,7 @@ def process_recovered_revenue(filepath: str = None):
     return None
 
 if __name__ == "__main__":
-    # print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
+    print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
 
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-    print(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")))
+    # print(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")))
