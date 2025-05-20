@@ -272,3 +272,38 @@ def process_pricing_history(filepath: str = None):
         except Exception as e:
             return e
     return None
+
+def process_all_time_inventory(filepath: str = None):
+    """
+    Main function to handle data from an all time inventory w/ testing records excel file
+
+    :param filepath: File path to the Excel file containing raw data.
+    :return: Processed DataFrame with relevant metrics.
+    """
+    if filepath is not None:
+        try:
+            sheets_dict = read_all_sheets(filepath)
+            print(sheets_dict)
+            return sheets_dict
+        except Exception as e:
+            return e
+    return None
+
+def process_recovered_revenue(filepath: str = None):
+    """
+    Main function to handle data from a recovered revenue excel file
+
+    :param filepath: File path to the Excel file containing raw data.
+    :return: Processed DataFrame with relevant metrics.
+    """
+    if filepath is not None:
+        try:
+            sheets_dict = read_all_sheets(filepath)
+            print(sheets_dict)
+            return sheets_dict
+        except Exception as e:
+            return e
+    return None
+
+if __name__ == "__main__":
+    process_all_time_inventory()
