@@ -1,4 +1,5 @@
 # Import required libraries and modules
+import os
 from datetime import datetime
 import plotly.express as px
 import numpy as np
@@ -10,24 +11,39 @@ load_dotenv()
 
 def calculate_date_difference(date1, date2) -> int:
     """
-    Calculate the number of days between two dates in mm/dd/yyyy format.
+    Calculate the number of days between two dates.
 
-    :param date1: Start date, either as a string in mm/dd/yyyy format or NaN.
-    :param date2: End date, either as a string in mm/dd/yyyy format or NaN.
-    :return: Number of days between the two dates. Returns 0 if either date is invalid or missing.
+    Supports formats:
+    - mm/dd/yyyy
+    - yyyy/mm/dd
+
+    :param date1: Start date as string or datetime object.
+    :param date2: End date as string or datetime object.
+    :return: Absolute number of days between the two dates, or 0 on error.
     """
     if pd.isna(date1) or pd.isna(date2):
-        # Handle missing or invalid dates gracefully
         return 0
 
-    try:
-        # Parse the input into datetime objects for calculation
-        date1_obj = datetime.strptime(str(date1), '%m/%d/%Y')
-        date2_obj = datetime.strptime(str(date2), '%m/%d/%Y')
-        return abs((date2_obj - date1_obj).days)  # Return absolute difference in days
-    except ValueError:
-        # Handle invalid date formats explicitly
+    formats = ['%m/%d/%Y', '%Y/%m/%d']
+
+    def parse_date(date_str):
+        if isinstance(date_str, datetime):
+            return date_str
+        for fmt in formats:
+            try:
+                return datetime.strptime(str(date_str), fmt)
+            except ValueError:
+                continue
+        return None  # If all formats fail
+
+    date1_obj = parse_date(date1)
+    date2_obj = parse_date(date2)
+
+    if date1_obj and date2_obj:
+        return abs((date2_obj - date1_obj).days)
+    else:
         return 0
+
 
 
 def get_ebay_url(item_id: str) -> str:
@@ -268,7 +284,6 @@ def read_all_sheets(filepath: str = None) -> dict:
     except Exception as e:
         raise e
 
-
 def process_pricing_history(filepath: str = None):
     """
     Main function to load, process, and visualize data from a pricing history excel file.
@@ -297,11 +312,18 @@ def process_all_time_inventory(filepath: str = None):
     if filepath is not None:
         try:
             sheets_dict = read_all_sheets(filepath)
-            print(sheets_dict)
             return sheets_dict
         except Exception as e:
             return e
     return None
+
+def filter_rr_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    filtered_df = df[df['Condition'] != 'SCRP'].copy()
+    filtered_df['# Days to sell'] = filtered_df.apply(
+        lambda row: calculate_date_difference(row['Added Date'], row['Sales Date']),
+        axis=1
+    )
+    return filtered_df
 
 def process_recovered_revenue(filepath: str = None):
     """
@@ -312,12 +334,15 @@ def process_recovered_revenue(filepath: str = None):
     """
     if filepath is not None:
         try:
-            sheets_dict = read_all_sheets(filepath)
-            print(sheets_dict)
-            return sheets_dict
+            df = pd.read_excel(filepath, usecols='C, D, F, N, O, P, R, S, T, U, V, Y, Z')
+            filtered_df = filter_rr_dataframe(df)
+            return filtered_df
         except Exception as e:
             return e
     return None
 
 if __name__ == "__main__":
-    process_all_time_inventory()
+    # print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
+
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    print(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")))
