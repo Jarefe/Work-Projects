@@ -89,7 +89,7 @@
     <form id="scraper-form">
         <textarea name="query" placeholder="Enter search string..." rows="3" required></textarea>
         <label for="page-count"><strong>Number of Pages to Scrape:</strong></label>
-        <input type="number" id="page-count" name="pages" min="1" max="10" value="2" style="width: 100px; margin-bottom: 10px;">
+        <input type="number" id="page-count" name="pages" min="1" max="10" value="2" style="width: 30px; margin-bottom: 10px;">
         <br>
         <button type="submit">Scrape eBay</button>
     </form>
@@ -108,13 +108,13 @@
         <button type="submit">Upload Pricing History</button>
     </form>
 
-    <form id="product-inventory-form" style="margin-top: 20px;">
-        <label><strong>Upload Product Inventory Excel File:</strong></label>
-        <input type="file" name="product_file" required>
-        <button type="submit">Upload Product Inventory File</button>
-    </form>
+<!--    <form id="product-inventory-form" style="margin-top: 20px;">-->
+<!--        <label><strong>Upload Product Inventory Excel File:</strong></label>-->
+<!--        <input type="file" name="product_file" required>-->
+<!--        <button type="submit">Upload Product Inventory File</button>-->
+<!--    </form>-->
 
-    <div id="pricing-upload-output" style="margin-top: 20px;"></div>
+    <div id="pricing-upload-output" style="margin-top: 10px;"></div>
 
     <iframe id="dash-frame" src="/dash/"></iframe>
 
