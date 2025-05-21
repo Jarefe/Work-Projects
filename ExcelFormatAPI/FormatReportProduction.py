@@ -23,7 +23,7 @@ GRAY_FILL = PatternFill(bgColor='D3D3D3')
 RAM_RULE = {
     'DDR3': 'ADD8E6',  # light blue
     'DDR4': 'C6EFCE',  # light green
-    'DDR5': '06402B',  # dark green
+    'DDR5': '008000',  # green
 }
 
 # style for header
