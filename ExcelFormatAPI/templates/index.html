@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testing Report Formatting Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            margin-top: 10px;
+        }
+        input[type="file"], textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            margin-top: 20px;
+        }
+        #scraper-output p {
+            margin-bottom: 0.5em;
+        }
+        #scraper-output a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        #scraper-output a:hover {
+            text-decoration: underline;
+        }
+        details summary {
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Testing Report Formatting Tool</h1>
+
+<!-- Section 1: Excel Formatter -->
+<div class="section">
+    <h2>📁 Excel Formatter</h2>
+    <p>Upload a raw Excel file to format it into a clean reporting layout and download the result.</p>
+    <form id="excel-form">
+        <input type="file" name="file" required>
+        <button type="submit">Format Excel File</button>
+    </form>
+    <div id="excel-output" style="margin-top: 20px;"></div>
+</div>
+
+<!-- JS: Excel Formatter -->
+<script>
+document.getElementById("excel-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const fileInput = e.target.querySelector("input[type='file']");
+    const outputDiv = document.getElementById("excel-output");
+
+    if (fileInput.files.length < 1) {
+        outputDiv.innerHTML = "<p style='color: red;'>Please upload a file before submitting.</p>";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    try {
+        const response = await fetch("/format-excel", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            outputDiv.innerHTML = `<p style='color: red;'>Error: ${errorText}</p>`;
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // Create and click a download link
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "formatted_excel.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        outputDiv.innerHTML = "<p style='color: green;'>File formatted and downloaded successfully.</p>";
+
+    } catch (err) {
+        outputDiv.innerHTML = `<p style='color: red;'>Upload failed: ${err.message}</p>`;
+    }
+});
+</script>
+
+</body>
+</html>
