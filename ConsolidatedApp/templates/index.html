@@ -74,12 +74,13 @@
 <!-- Section 1: Excel Formatter -->
 <div class="section">
     <h2>📁 Excel Formatter</h2>
-    <p>Upload a raw Excel file to format it into a clean reporting layout and download the result.</p>
-    <form id="excel-form">
+    <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
+    <p>Note: for the moment, this is only for formatting testing reports.</p>
+
+    <form method="POST" action="/format-excel" enctype="multipart/form-data">
         <input type="file" name="file" required>
-        <button type="submit">Format Excel File</button>
+        <button type="submit">Format and Download</button>
     </form>
-    <div id="excel-output" style="margin-top: 20px;"></div>
 </div>
 
 <!-- Section 2: eBay Scraper -->
@@ -120,44 +121,6 @@
 
     <hr style="margin: 20px 0;">
 </div>
-
-<!-- JS: Excel Formatter Upload -->
-<script>
-    document.getElementById("excel-form").addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const formData = new FormData();
-        const fileInput = e.target.querySelector("input[type='file']");
-        const outputDiv = document.getElementById("excel-output");
-
-        if (fileInput.files.length < 1) {
-            outputDiv.innerHTML = "<p style='color: red;'>Please upload a file before submitting.</p>";
-            return;
-        }
-
-        formData.append("file", fileInput.files[0]);
-
-        try {
-            const response = await fetch("/format-excel", {
-                method: "POST",
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.download_link) {
-                outputDiv.innerHTML = `
-                    <p style="color: green;">File processed successfully!
-                    <a href="${data.download_link}" target="_blank" download>Click here to download</a></p>
-                `;
-            } else if (data.error) {
-                outputDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
-            }
-        } catch (err) {
-            outputDiv.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
-        }
-    });
-</script>
 
 <!-- JS: eBay Scraper -->
 <script>
