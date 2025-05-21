@@ -42,18 +42,6 @@ def format_excel():
         # Return a JSON error message in case of failure
         return jsonify({'error': str(e)}), 500
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    """
-    Serve a file for download if it exists in TEMP_FILES.
-
-    :param filename: The name of the file to be downloaded (stored in TEMP_FILES).
-    :return: Downloadable file or an error page if the file does not exist.
-    """
-    if filename in TEMP_FILES:
-        file_path = TEMP_FILES[filename]
-        return send_file(file_path, as_attachment=True, download_name="formatted_excel.xlsx")
-    return "File not found or expired.", 404
 
 @app.route('/')
 def home():
