@@ -7,6 +7,7 @@ import openpyxl
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
+
 from ExcelFormatAPI.FormatReportProduction import create_table, format_header, autofit, copy_data
 
 # Load environment variables (e.g., file paths or other configurations)
@@ -46,7 +47,6 @@ def calculate_date_difference(date1, date2) -> int:
         return abs((date2_obj - date1_obj).days)
     else:
         return 0
-
 
 
 def get_ebay_url(item_id: str) -> str:
@@ -273,7 +273,6 @@ def output_graphs(df: pd.DataFrame):
     avg_profit_by_purchase_range(df).show()
     monthly_profit_over_time(df).show()
 
-import pandas as pd
 
 def read_all_sheets(filepath: str = None) -> pd.DataFrame:
     """
@@ -312,6 +311,7 @@ def find_data_overlaps(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
 
     return combined_df
 
+
 def process_pricing_history(filepath: str = None):
     """
     Main function to load, process, and visualize data from a pricing history excel file.
@@ -330,6 +330,7 @@ def process_pricing_history(filepath: str = None):
             return e
     return None
 
+
 def process_all_time_inventory(filepath: str = None):
     """
     Main function to handle data from an all time inventory w/ testing records excel file
@@ -345,6 +346,7 @@ def process_all_time_inventory(filepath: str = None):
             return e
     return None
 
+
 def filter_rr_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     filtered_df = df[df['Condition'] != 'SCRP'].copy()
     filtered_df['# Days to sell'] = filtered_df.apply(
@@ -352,6 +354,7 @@ def filter_rr_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         axis=1
     )
     return filtered_df
+
 
 def process_recovered_revenue(filepath: str = None):
     """
@@ -369,6 +372,7 @@ def process_recovered_revenue(filepath: str = None):
         except Exception as e:
             return e
     return None
+
 
 if __name__ == "__main__":
     # print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
