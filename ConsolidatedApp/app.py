@@ -138,6 +138,7 @@ def download_file(filename):
     return "File not found or expired.", 404
 
 @app.route('/upload-pricing-history', methods=['POST'])
+#TODO: implement recovered revenue analysis
 def upload_pricing_history():
     file = request.files.get('file')
     if not file:
