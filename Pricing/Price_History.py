@@ -3,9 +3,11 @@ import os
 from datetime import datetime
 
 import numpy as np
+import openpyxl
 import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
+from ExcelFormatAPI.FormatReportProduction import create_table, format_header, autofit, copy_data
 
 # Load environment variables (e.g., file paths or other configurations)
 load_dotenv()
@@ -371,4 +373,15 @@ def process_recovered_revenue(filepath: str = None):
 if __name__ == "__main__":
     # print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
     final_df = (find_data_overlaps(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")),process_all_time_inventory(os.getenv("TESTING_ALL_TIME"))))
-    final_df.to_excel('final_output.xlsx', index=False)
+    final_df = final_df.dropna(axis=1, how='all') # Drop columns where all values are blank
+    final_df.to_excel('raw_output.xlsx', index=False)
+
+    raw = openpyxl.load_workbook('raw_output.xlsx')
+    final = copy_data(raw)
+    for sheet in final.sheetnames:
+        current_sheet = final[sheet]
+        create_table(current_sheet)
+        format_header(current_sheet)
+        autofit(current_sheet)
+
+    final.save('final_output.xlsx')
