@@ -5,67 +5,83 @@
     <title>Consolidated Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 2rem;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-        }
-        .section {
-            background-color: white;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        form {
-            margin-top: 10px;
-        }
-        input[type="file"], textarea {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        iframe {
-            width: 100%;
-            height: 800px;
-            border: none;
-            margin-top: 20px;
-        }
-        #scraper-output p {
-            margin-bottom: 0.5em;
-        }
-        #scraper-output a {
-            color: #007BFF;
-            text-decoration: none;
-        }
-        #scraper-output a:hover {
-            text-decoration: underline;
-        }
-        details summary {
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        pre {
-            background: #f0f0f0;
-            padding: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-    </style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background-color: #f4f4f4;
+    }
+    h1 {
+        text-align: center;
+    }
+    .section {
+        background-color: white;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    form {
+        margin-top: 10px;
+    }
+    input[type="file"], textarea {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    button {
+        padding: 10px 15px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    iframe {
+        width: 100%;
+        height: 800px;
+        border: none;
+        margin-top: 20px;
+    }
+    #scraper-output p {
+        margin-bottom: 0.5em;
+    }
+    #scraper-output a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+    #scraper-output a:hover {
+        text-decoration: underline;
+    }
+    details summary {
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    pre {
+        background: #f0f0f0;
+        padding: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    /* 🔽 New Drag & Drop Styles 🔽 */
+    #drop-area {
+        border: 2px dashed #007BFF;
+        padding: 20px;
+        text-align: center;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    #drop-area.hover {
+        background-color: #e0f0ff;
+    }
+</style>
+
 </head>
 <body>
 
@@ -77,11 +93,15 @@
     <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
     <p>Note: for the moment, this is only for formatting testing reports.</p>
 
-    <form method="POST" action="/format-excel" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <button type="submit">Format and Download</button>
+    <form method="POST" action="/format-excel" enctype="multipart/form-data" id="excel-form">
+        <div id="drop-area">
+            <p>Drag & Drop file here or click to select</p>
+            <input type="file" name="file" id="excel-file" required hidden>
+        </div>
+        <button type="submit" style="margin-top: 10px;">Format and Download</button>
     </form>
 </div>
+
 
 <!-- Section 2: eBay Scraper -->
 <div class="section">
@@ -238,6 +258,39 @@
         }
     });
 </script>
+
+<script>
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('excel-file');
+
+    // Clicking the drop area opens file dialog
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    // Highlight drop area on drag
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropArea.classList.add('hover');
+        });
+    });
+
+    // Remove highlight when not dragging
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('hover');
+        });
+    });
+
+    // Handle dropped files
+    dropArea.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;  // Attach dropped file to hidden input
+        }
+    });
+</script>
+
 
 </body>
 </html>
