@@ -1,9 +1,10 @@
 # Import required libraries and modules
 import os
 from datetime import datetime
-import plotly.express as px
+
 import numpy as np
 import pandas as pd
+import plotly.express as px
 from dotenv import load_dotenv
 
 # Load environment variables (e.g., file paths or other configurations)
@@ -272,46 +273,21 @@ def output_graphs(df: pd.DataFrame):
 
 import pandas as pd
 
-def read_all_sheets(filepath: str = None) -> dict:
+def read_all_sheets(filepath: str = None) -> pd.DataFrame:
     """
     Reads specified sheets from an Excel workbook and returns a dictionary of processed DataFrames,
     each processed based on its sheet name.
 
     :param filepath: Path to the Excel workbook (.xlsx or .xls).
-    :return: Dictionary where keys are sheet names and values are DataFrames.
+    :return: single dataframe with all sheet information
     """
-    SHEET_NAMES = {
-        "Dash Inventory",
-        "Desktops",
-        "Laptops",
-        "Networking",
-        "Servers"
-    }
-
-    # Define custom logic for each sheet
-    sheet_configs = {
-        "Dash Inventory": {"usecols": "A:I"},
-        "Desktops": {"usecols": "A:E,G:S,U"},
-        "Laptops": {"usecols": "A:E,G:S,U"},
-        "Networking": {"usecols": "A:E,G:P,R"},
-        "Servers": {"usecols": "A:E,G:Z,AB"}
-    }
-
-    sheets_dict = {}
-
     try:
-        for sheet_name in SHEET_NAMES:
-            if sheet_name in sheet_configs:
-                config = sheet_configs[sheet_name]
-                df = pd.read_excel(filepath, sheet_name=sheet_name, **config)
 
-                # Optional: Add custom cleaning logic here per sheet
-                # if sheet_name == "Laptops":
-                #     df.rename(columns={"Old Name": "New Name"}, inplace=True)
+        all_sheets = pd.read_excel(filepath,sheet_name=None) # Reads all sheets
+        all_sheets.pop("Dash Inventory") # Remove dash inventory
+        df = pd.concat(all_sheets.values(), ignore_index=True)
 
-                sheets_dict[sheet_name] = df
-
-        return sheets_dict
+        return df
 
     except Exception as e:
         raise RuntimeError(f"Failed to read Excel file: {e}")
@@ -320,14 +296,17 @@ def read_all_sheets(filepath: str = None) -> dict:
 def find_data_overlaps(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     """
     Function to find data that exists in both sheets (will allow to pull pricing data and specs, then output as 1 dataframe with all relevant data for ML
+    Intended for merging pricing
 
     :param df1: first dataframe to compare
     :param df2: second dataframe to compare
     :return: combined dataframe
     """
-    combined_df = df1 # FIXME: only in place to suppress errors
+    # Merge on both keys (safer if one might be missing)
+    combined_df = pd.merge(df1, df2, on="SN", how="inner")
 
-
+    # Drop duplicates after merge if needed
+    combined_df = combined_df.drop_duplicates(subset="SN")
 
     return combined_df
 
@@ -358,8 +337,8 @@ def process_all_time_inventory(filepath: str = None):
     """
     if filepath is not None:
         try:
-            sheets_dict = read_all_sheets(filepath)
-            return sheets_dict
+            combined_df = read_all_sheets(filepath)
+            return combined_df
         except Exception as e:
             return e
     return None
@@ -381,7 +360,8 @@ def process_recovered_revenue(filepath: str = None):
     """
     if filepath is not None:
         try:
-            df = pd.read_excel(filepath, usecols='C, D, F, N, O, P, R, S, T, U, V, Y, Z')
+            df = pd.read_excel(filepath, usecols='F, H, N, O, P, R, S, T, U, V, Y, Z')
+            df.rename(columns={'Serial Number': 'SN'}, inplace=True)
             filtered_df = filter_rr_dataframe(df)
             return filtered_df
         except Exception as e:
@@ -389,7 +369,6 @@ def process_recovered_revenue(filepath: str = None):
     return None
 
 if __name__ == "__main__":
-    print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
-
-    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-    # print(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")))
+    # print(process_all_time_inventory(os.getenv("TESTING_ALL_TIME")))
+    final_df = (find_data_overlaps(process_recovered_revenue(os.getenv("TESTING_RECOVERED_REVENUE")),process_all_time_inventory(os.getenv("TESTING_ALL_TIME"))))
+    final_df.to_excel('final_output.xlsx', index=False)
