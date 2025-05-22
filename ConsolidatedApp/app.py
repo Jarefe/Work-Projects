@@ -126,6 +126,11 @@ def format_excel():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/auto-attribute')
+def attribute():
+    file_storage = request.files['file']
+    #TODO: implement auto attribute function
+
 @app.route('/download/<filename>')
 def download_file(filename):
     if filename in TEMP_FILES:
