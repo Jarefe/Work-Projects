@@ -93,12 +93,13 @@
     <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
     <p>Note: for the moment, this is only for formatting testing reports.</p>
 
-    <form method="POST" action="/format-excel" enctype="multipart/form-data" id="excel-form">
+    <form method="POST" enctype="multipart/form-data" id="excel-form">
         <div id="drop-area">
             <p>Drag & Drop file here or click to select</p>
             <input type="file" name="file" id="excel-file" required hidden>
         </div>
-        <button type="submit" style="margin-top: 10px;">Format and Download</button>
+        <button type="submit" name="action" value="format" style="margin-top: 10px;">Format Testing Report</button>
+        <button type="submit" name="action" value="attribute" style="margin-top: 10px; margin-left: 10px;">Auto Attribute</button>
     </form>
 </div>
 
@@ -260,6 +261,17 @@
 </script>
 
 <script>
+    const excelForm = document.getElementById("excel-form");
+
+    excelForm.addEventListener("submit", function (e) {
+        const clickedButton = document.activeElement;
+        if (clickedButton.value === "format") {
+            excelForm.action = "/format-excel";
+        } else if (clickedButton.value === "attribute") {
+            excelForm.action = "/auto-attribute";
+        }
+    });
+
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('excel-file');
 
