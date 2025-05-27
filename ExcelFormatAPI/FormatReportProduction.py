@@ -205,6 +205,19 @@ def FOR_TESTING_convert_to_JSON(workbook):
         print(f"Error converting to JSON: {e}")
         raise
 
+def transform_api_response(api_response):
+    """Converts API response to expected format for format_JSON_data"""
+    sheets = []
+
+    # Handle top-level key 'data'
+    for sheet_name, rows in api_response.get('data', {}).items():
+        sheets.append({
+            "sheet_name": sheet_name,
+            "data": rows
+        })
+
+    return sheets
+
 
 def format_JSON_data(data):
     """Formats passed in JSON data and returns workbook object"""
@@ -212,6 +225,8 @@ def format_JSON_data(data):
         # parse JSON string to Python object if string
         if isinstance(data, str):
             data = json.loads(data)
+
+        data = transform_api_response(data)
 
         # create new workbook
         wb = Workbook()

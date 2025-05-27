@@ -1,9 +1,16 @@
+import io
+import uuid
+import requests
 from flask import Flask, render_template, request, jsonify, send_file
 import tempfile
-from ExcelFormatAPI.FormatReportProduction import format_excel_file
+from ExcelFormatAPI.FormatReportProduction import format_excel_file, format_JSON_data
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# Endpoint
+URL = 'https://api.smartimageserve.com/upload'
+endpoint = 'https://itaderp.com/luisha/reportToJson.php'
 
 # Store dictionary of temporarily generated file links
 # Keys are filenames, and values are their corresponding file paths
@@ -42,6 +49,23 @@ def format_excel():
         # Return a JSON error message in case of failure
         return jsonify({'error': str(e)}), 500
 
+@app.route('/fetch-data-debugging')
+def fetch_data():
+    payload = {
+        "vendor": 6467,
+        "filter": "pos",
+        "categories": ['desktop', 'laptop'],
+        "types": ["inventory"],
+        "pos": 13093
+    }
+
+    try:
+        response = requests.post(endpoint, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        return jsonify(data)  # return the raw JSON for now
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Failed to retrieve data: {str(e)}"}), 500
 
 @app.route('/')
 def home():
@@ -51,6 +75,77 @@ def home():
     :return: Rendered homepage template (HTML).
     """
     return render_template('index.html')
+
+@app.route('/format')
+def format_data():
+    try:
+        # FIXME: make payload dynamic by obtaining data from statistics form
+
+        payload = {
+            "vendor": 6467,
+            "filter": "pos",
+            "categories": ['desktop', 'laptop'],
+            "types": ["inventory"],
+            "pos": 13093
+        }
+
+        # Send POST request to endpoint
+        response = requests.post(endpoint, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        # Format JSON data
+        processed_workbook = format_JSON_data(data)
+
+        # Generate unique file name
+        file_id = str(uuid.uuid4())  # unique identifier for file
+        file_name = f'{file_id}.xlsx'
+
+        file_stream = io.BytesIO()
+
+        # Save workbook to filestream
+        try:
+            processed_workbook.save(file_stream)
+            file_stream.seek(0)  # go to beginning of stream before uploading
+            print(f'File generated')
+        except Exception as e:
+            print(f'Error saving file: {e}')
+
+        # Generate URL
+        payload = {'folderName': 'greenteksolutions'}
+        files = [
+            ('file', (file_name, file_stream,
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
+        ]
+        headers = {}
+
+        # Make POST request
+        response = requests.request('POST', URL, headers=headers, data=payload, files=files)
+        response_data = response.json()
+
+        image_url = response_data.get('image_url')
+        secure_url = response_data.get('secure_url')
+        status = response_data.get('status')
+
+        output = {
+            'image_url': image_url,
+            'secure_url': secure_url,
+            'status': status
+        }
+        print(output)  # for debugging purposes
+
+        # Return download url for front end to process
+        return jsonify({
+            'download_url': secure_url,
+            'upload_status': response.status_code,
+            'upload_message': response.text
+        })
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Failed to retrieve data: {str(e)}"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Something went wrong: {str(e)}"}), 500
 
 if __name__ == '__main__':
     """
