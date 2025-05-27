@@ -34,6 +34,15 @@
         button:hover {
             background-color: #0056b3;
         }
+        .form-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .form-box {
+            flex: 1;
+            min-width: 300px;
+        }
     </style>
 </head>
 <body>
@@ -44,10 +53,21 @@
     <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
     <p>Note: for the moment, this is only for formatting testing reports.</p>
 
-    <form method="POST" action="/format-excel" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <button type="submit">Format and Download</button>
-    </form>
+    <div class="form-container">
+        <div class="form-box">
+            <form method="POST" action="/format-excel" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <button type="submit">🧪 Standard Format</button>
+            </form>
+        </div>
+
+        <div class="form-box">
+            <form method="POST" action="/format-extreme" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <button type="submit">⚡ Extreme Format</button>
+            </form>
+        </div>
+    </div>
 </div>
 
 </body>

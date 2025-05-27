@@ -1,9 +1,8 @@
-import os
-
 import pandas as pd
 from dotenv import load_dotenv
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
+from ExcelFormatAPI.FormatReportProduction import process_workbook
 
 load_dotenv()
 
@@ -18,6 +17,7 @@ DASH_INVENTORY_HEADERS = [
     'PO-Line',
     'Status'
 ]
+
 
 DESKTOP_HEADERS = [
     "PO#",
@@ -44,6 +44,7 @@ DESKTOP_HEADERS = [
     "Vendor"# not in eps
 ]
 
+
 LAPTOP_HEADERS = [ # = dealt with
     "PO#",
     "Line#",
@@ -68,6 +69,7 @@ LAPTOP_HEADERS = [ # = dealt with
     "Cost",
     "Vendor"# not in eps
 ]
+
 
 EXTREME_LAPTOP_HEADERS = [
     "Item", "Brand", "SN", "Category", "Description", "Condition", "PO-Line", "QTY", "Cost", "Status",
@@ -96,6 +98,7 @@ EXTREME_LAPTOP_HEADERS = [
     "Component Serial Number #6", "Network Adapter #1", "Video Adapter #1"
 ]
 
+
 EXTREME_DESKTOP_HEADERS = [
     "Item", "Brand", "SN", "Category", "Description", "Condition", "PO-Line", "QTY", "Cost", "Status",
     "Receive Status", "SO-Line", "SO Rep", "Warehouse", "PO Rep", "Update Date", "Customer Asset Tag",
@@ -120,12 +123,14 @@ EXTREME_DESKTOP_HEADERS = [
     "Component Serial Number #5", "Network Adapter #1", "Video Adapter #1"
 ]
 
+
 def process_dash(df: pd.DataFrame):
     temp = df.copy()
     temp.rename(columns={'IQ Inventory ID' : 'Inv-ID'}, inplace=True)
     dash_df = temp[DASH_INVENTORY_HEADERS]
 
     return dash_df
+
 
 def process_extreme_laptops(df: pd.DataFrame):
     dash_df = process_dash(df)
@@ -160,6 +165,7 @@ def process_extreme_laptops(df: pd.DataFrame):
 
     return dash_df, laptop_df
 
+
 def process_extreme_desktops(df: pd.DataFrame):
     dash_df = process_dash(df)
     # Rename columns to match
@@ -192,23 +198,33 @@ def process_extreme_desktops(df: pd.DataFrame):
 
     return dash_df, desktop_df
 
-def process_extreme_attributes(filepath: str):
+
+def process_extreme_attributes(workbook):
     try:
-        raw_dataframe = pd.read_excel(filepath)
+        raw_dataframe = pd.read_excel(workbook)
 
         device_type = raw_dataframe['Category'].iloc[0]
 
         if device_type == 'PC' or device_type == 'Desktop':
             dash, devices = process_extreme_desktops(raw_dataframe)
-            return dash, devices, 'Desktops'
+
         elif device_type == 'Laptop':
             dash, devices =  process_extreme_laptops(raw_dataframe)
-            return dash, devices, 'Laptops'
 
-        return None
+        else:
+            return None
+
+        # Create workbook with raw data
+        wb = create_workbook(dash, devices, device_type)
+
+        # Process/format workbook in-memory
+        formatted_wb = process_workbook(wb)
+
+        return formatted_wb
 
     except Exception as ex:
         raise ex
+
 
 def create_workbook(dash_df, device_df, device_type):
     new_wb = Workbook()
@@ -227,19 +243,3 @@ def create_workbook(dash_df, device_df, device_type):
         type_sheet.append(row)
 
     return new_wb
-
-
-if __name__ == '__main__':
-    from ExcelFormatAPI.FormatReportProduction import process_workbook
-
-    # Get dataframes and category string
-    dash_data, device_data, category = process_extreme_attributes(os.getenv('AUTO_ATT_TESTING'))
-
-    # Create workbook with raw data
-    wb = create_workbook(dash_data, device_data, category)
-
-    # Process/format workbook in-memory
-    formatted_wb = process_workbook(wb)
-
-    # Save the formatted workbook
-    formatted_wb.save('output.xlsx')
