@@ -4,6 +4,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
 from ExcelFormatAPI.FormatReportProduction import process_workbook
 
+
 load_dotenv()
 
 DASH_INVENTORY_HEADERS = [
@@ -196,6 +197,7 @@ def process_extreme_desktops(df: pd.DataFrame):
             continue
         desktop_df[col] = df[col]
 
+
     return dash_df, desktop_df
 
 
@@ -211,6 +213,7 @@ def process_extreme_attributes(workbook):
         elif device_type == 'Laptop':
             dash, devices =  process_extreme_laptops(raw_dataframe)
 
+
         else:
             return None
 
@@ -224,7 +227,6 @@ def process_extreme_attributes(workbook):
 
     except Exception as ex:
         raise ex
-
 
 def create_workbook(dash_df, device_df, device_type):
     new_wb = Workbook()
@@ -243,3 +245,19 @@ def create_workbook(dash_df, device_df, device_type):
         type_sheet.append(row)
 
     return new_wb
+
+
+if __name__ == '__main__':
+    from ExcelFormatAPI.FormatReportProduction import process_workbook
+
+    # Get dataframes and category string
+    dash_data, device_data, category = process_extreme_attributes(os.getenv('AUTO_ATT_TESTING'))
+
+    # Create workbook with raw data
+    wb = create_workbook(dash_data, device_data, category)
+
+    # Process/format workbook in-memory
+    formatted_wb = process_workbook(wb)
+
+    # Save the formatted workbook
+    formatted_wb.save('output.xlsx')
