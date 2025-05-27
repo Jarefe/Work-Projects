@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 from dotenv import load_dotenv
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.workbook import Workbook
 
 load_dotenv()
 
@@ -132,7 +134,6 @@ def process_extreme_laptops(df: pd.DataFrame):
         'Item' : 'Item#',
         'System Manufacturer' : 'MFGR',
         'IQ Inventory ID' : 'IQ Inv-ID',
-        'System Serial Number' : 'SN',
         'System Processor Information' : 'Processor',
         'Memory Type #1' : 'Type of RAM',
         'Memory Size #1' : 'RAM Capacity',
@@ -151,8 +152,13 @@ def process_extreme_laptops(df: pd.DataFrame):
     # split PO line to 2 columns
     po_line_df = df['PO-Line'].str.split('-', expand=True)
 
-    laptop_df['PO#'] = po_line_df['PO#'].values
-    laptop_df['Line#'] = po_line_df['Line#'].values
+    laptop_df['PO#'] = po_line_df[0].values
+    laptop_df['Line#'] = po_line_df[1].values
+
+    for col in LAPTOP_HEADERS:
+        if col not in df.columns:
+            continue
+        laptop_df[col] = df[col]
 
 
     return dash_df, laptop_df
@@ -164,21 +170,50 @@ def process_extreme_attributes(filepath: str):
     try:
         raw_dataframe = pd.read_excel(filepath)
 
-        category = raw_dataframe['Category'].iloc[0]
+        device_type = raw_dataframe['Category'].iloc[0]
 
-        if category == 'PC':
+        if device_type == 'PC':
+
             return process_extreme_desktops(raw_dataframe)
-        elif category == 'Laptop':
-            return process_extreme_laptops(raw_dataframe)
+        elif device_type == 'Laptop':
+            dash, devices =  process_extreme_laptops(raw_dataframe)
+            return dash, devices, device_type
 
         return None
 
     except Exception as ex:
         raise ex
 
-if __name__ == '__main__':
-    try:
-        print(process_extreme_attributes(os.getenv('AUTO_ATT_TESTING')))
+def create_workbook(dash_df, device_df, device_type):
+    new_wb = Workbook()
+    # Remove default sheet
+    default_sheet = new_wb.active
+    new_wb.remove(default_sheet)
 
-    except Exception as e:
-        print(f'error occurred: {e}')
+    # Create first sheet 'Dash Inventory' and append data
+    dash_sheet = new_wb.create_sheet(title='Dash Inventory')
+    for row in dataframe_to_rows(dash_df, index=False, header=True):
+        dash_sheet.append(row)
+
+    # Create second sheet with category name and append data
+    type_sheet = new_wb.create_sheet(title=device_type)
+    for row in dataframe_to_rows(device_df, index=False, header=True):
+        type_sheet.append(row)
+
+    return new_wb
+
+
+if __name__ == '__main__':
+    from ExcelFormatAPI.FormatReportProduction import process_workbook
+
+    # Get dataframes and category string
+    dash_data, device_data, category = process_extreme_attributes(os.getenv('AUTO_ATT_TESTING'))
+
+    # Create workbook with raw data
+    wb = create_workbook(dash_data, device_data, category)
+
+    # Process/format workbook in-memory
+    formatted_wb = process_workbook(wb)
+
+    # Save the formatted workbook
+    formatted_wb.save('output.xlsx')
