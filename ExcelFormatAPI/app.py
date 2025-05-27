@@ -3,6 +3,8 @@ import uuid
 import requests
 from flask import Flask, render_template, request, jsonify, send_file
 import tempfile
+
+from ExcelFormatAPI.Auto_Attribute import process_extreme_attributes
 from ExcelFormatAPI.FormatReportProduction import format_excel_file, format_JSON_data
 
 # Initialize Flask app
@@ -66,19 +68,19 @@ def generate_download_link(workbook):
         'upload_message': response.text
     })
 
-@app.route('/format-excel', methods=['POST'])
-def format_excel():
+def handle_formatting_upload(file_storage, processor_func):
     """
-    Process an uploaded raw Excel file, apply formatting, and provide it as a downloadable file.
+    Shared logic for handling file uploads and returning a formatted Excel file.
 
-    :return: Downloadable formatted Excel file or error JSON.
+    :param file_storage: Uploaded file from Flask request.
+    :param processor_func: Function to process the uploaded file and return an openpyxl Workbook.
+    :return: Flask response with the formatted file or JSON error.
     """
-    file_storage = request.files['file']
     try:
-        # Process the uploaded file and return a formatted Excel workbook
-        workbook = format_excel_file(file_storage)
+        # Process the uploaded file with the provided function
+        workbook = processor_func(file_storage)
 
-        # Save the workbook to a temporary file
+        # Save to a temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
         workbook.save(temp_file.name)
 
@@ -86,7 +88,6 @@ def format_excel():
         filename = temp_file.name.split('/')[-1]
         TEMP_FILES[filename] = temp_file.name
 
-        # Return the file as a downloadable attachment
         return send_file(
             temp_file.name,
             as_attachment=True,
@@ -95,8 +96,24 @@ def format_excel():
         )
 
     except Exception as e:
-        # Return a JSON error message in case of failure
         return jsonify({'error': str(e)}), 500
+
+@app.route('/format-excel', methods=['POST'])
+def format_excel():
+    """
+    Endpoint for general Excel formatting.
+    """
+    file_storage = request.files['file']
+    return handle_formatting_upload(file_storage, format_excel_file)
+
+
+@app.route('/format-extreme', methods=['POST'])
+def format_extreme():
+    """
+    Endpoint for Extreme Testing formatting.
+    """
+    file_storage = request.files['file']
+    return handle_formatting_upload(file_storage, process_extreme_attributes)
 
 @app.route('/fetch-data-debugging')
 def fetch_data():
