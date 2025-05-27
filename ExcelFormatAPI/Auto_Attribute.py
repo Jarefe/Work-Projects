@@ -37,36 +37,36 @@ DESKTOP_HEADERS = [
     "Drive Interface",
     "GPU",
     "Wi-Fi",
-    "Form Factor",
-    "Notes",
+    "Form Factor",# not in eps
+    "Notes",# not in eps
     "Location",
     "Cost",
-    "Vendor"
+    "Vendor"# not in eps
 ]
 
 LAPTOP_HEADERS = [ # = dealt with
-    "PO#",#
-    "Line#",#
-    "Condition",#
-    "MFGR",#
-    "Item#",#
-    "Description",#
-    "IQ Inv-ID",#
-    "SN",#
-    "Status",#
-    "Processor",#
-    "Type of RAM",#
-    "RAM Capacity",#
-    "Battery",#
-    "Touchscreen", # does not show in eps
-    "GPU",#
-    "Drive Caddy",# does not show in eps
-    "Drive Capacity",#
-    "Drive Interface",#
-    "Notes",# does not show in eps
-    "Location",#
-    "Cost",#
-    "Vendor"# does not show in eps
+    "PO#",
+    "Line#",
+    "Condition",
+    "MFGR",
+    "Item#",
+    "Description",
+    "IQ Inv-ID",
+    "SN",
+    "Status",
+    "Processor",
+    "Type of RAM",
+    "RAM Capacity",
+    "Battery",
+    "Touchscreen", # not in eps
+    "GPU",
+    "Drive Caddy",# not in eps
+    "Drive Capacity",
+    "Drive Interface",
+    "Notes",# not in eps
+    "Location",
+    "Cost",
+    "Vendor"# not in eps
 ]
 
 EXTREME_LAPTOP_HEADERS = [
@@ -146,9 +146,6 @@ def process_extreme_laptops(df: pd.DataFrame):
 
     laptop_df = pd.DataFrame(index=df.index, columns=LAPTOP_HEADERS)
 
-    # FIXME: copying data to new dataframe
-
-
     # split PO line to 2 columns
     po_line_df = df['PO-Line'].str.split('-', expand=True)
 
@@ -164,7 +161,36 @@ def process_extreme_laptops(df: pd.DataFrame):
     return dash_df, laptop_df
 
 def process_extreme_desktops(df: pd.DataFrame):
-    pass
+    dash_df = process_dash(df)
+    # Rename columns to match
+    rename = {
+        'System Manufacturer' : 'MFGR',
+        'Item' : 'Item#',
+        'IQ Inventory ID' : 'IQ Inv-ID',
+        'System Processor Information' : 'Processor',
+        'Memory Type #1' : 'Type of RAM',
+        'System Memory Information' : 'RAM Capacity',
+        'HDD Capacity #1' : 'Drive Capacity',
+        'HDD Form Factor #1' : 'Drive Interface',
+        'Video Adapter #1' : 'GPU',
+        'Network Adapter #1' : 'Wi-Fi'
+    }
+    df.rename(columns=rename, inplace=True)
+
+    desktop_df = pd.DataFrame(index=df.index, columns=DESKTOP_HEADERS)
+
+    # split PO line to 2 columns
+    po_line_df = df['PO-Line'].str.split('-', expand=True)
+
+    desktop_df['PO#'] = po_line_df[0].values
+    desktop_df['Line#'] = po_line_df[1].values
+
+    for col in DESKTOP_HEADERS:
+        if col not in df.columns:
+            continue
+        desktop_df[col] = df[col]
+
+    return dash_df, desktop_df
 
 def process_extreme_attributes(filepath: str):
     try:
@@ -172,12 +198,12 @@ def process_extreme_attributes(filepath: str):
 
         device_type = raw_dataframe['Category'].iloc[0]
 
-        if device_type == 'PC':
-
-            return process_extreme_desktops(raw_dataframe)
+        if device_type == 'PC' or device_type == 'Desktop':
+            dash, devices = process_extreme_desktops(raw_dataframe)
+            return dash, devices, 'Desktops'
         elif device_type == 'Laptop':
             dash, devices =  process_extreme_laptops(raw_dataframe)
-            return dash, devices, device_type
+            return dash, devices, 'Laptops'
 
         return None
 
