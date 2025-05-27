@@ -245,19 +245,3 @@ def create_workbook(dash_df, device_df, device_type):
         type_sheet.append(row)
 
     return new_wb
-
-
-if __name__ == '__main__':
-    from ExcelFormatAPI.FormatReportProduction import process_workbook
-
-    # Get dataframes and category string
-    dash_data, device_data, category = process_extreme_attributes(os.getenv('AUTO_ATT_TESTING'))
-
-    # Create workbook with raw data
-    wb = create_workbook(dash_data, device_data, category)
-
-    # Process/format workbook in-memory
-    formatted_wb = process_workbook(wb)
-
-    # Save the formatted workbook
-    formatted_wb.save('output.xlsx')
