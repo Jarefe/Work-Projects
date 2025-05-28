@@ -43,6 +43,11 @@
             flex: 1;
             min-width: 300px;
         }
+        .form-description {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -50,21 +55,26 @@
 <h1>📁 Testing Report Formatting Tool</h1>
 
 <div class="section">
-    <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
-    <p>Note: for the moment, this is only for formatting testing reports.</p>
+    <p>Upload an Excel file. It will automatically be formatted and downloaded.</p>
 
     <div class="form-container">
         <div class="form-box">
+            <p class="form-description">
+                <strong>Standard Format:</strong> Accepts All-Time Inventory reports and produces a formatted testing report.
+            </p>
             <form method="POST" action="/format-excel" enctype="multipart/form-data">
                 <input type="file" name="file" required>
-                <button type="submit">🧪 Standard Format</button>
+                <button type="submit">Standard Format</button>
             </form>
         </div>
 
         <div class="form-box">
+            <p class="form-description">
+                <strong>Extreme Format:</strong> Accepts full Extreme reports with attributes and formats a testing report using EPS data.
+            </p>
             <form method="POST" action="/format-extreme" enctype="multipart/form-data">
                 <input type="file" name="file" required>
-                <button type="submit">⚡ Extreme Format</button>
+                <button type="submit">Extreme Format</button>
             </form>
         </div>
     </div>
