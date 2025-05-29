@@ -5,103 +5,166 @@
     <title>Consolidated Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 2rem;
-        background-color: #f4f4f4;
-    }
-    h1 {
-        text-align: center;
-    }
-    .section {
-        background-color: white;
-        padding: 20px;
-        margin-bottom: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-    form {
-        margin-top: 10px;
-    }
-    input[type="file"], textarea {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    button {
-        padding: 10px 15px;
-        background-color: #007BFF;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    button:hover {
-        background-color: #0056b3;
-    }
-    iframe {
-        width: 100%;
-        height: 800px;
-        border: none;
-        margin-top: 20px;
-    }
-    #scraper-output p {
-        margin-bottom: 0.5em;
-    }
-    #scraper-output a {
-        color: #007BFF;
-        text-decoration: none;
-    }
-    #scraper-output a:hover {
-        text-decoration: underline;
-    }
-    details summary {
-        cursor: pointer;
-        font-weight: bold;
-        margin-top: 10px;
-    }
-    pre {
-        background: #f0f0f0;
-        padding: 10px;
-        max-height: 300px;
-        overflow-y: auto;
-    }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            margin-top: 10px;
+        }
+        input[type="file"], textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            margin-top: 20px;
+        }
+        #scraper-output p {
+            margin-bottom: 0.5em;
+        }
+        #scraper-output a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        #scraper-output a:hover {
+            text-decoration: underline;
+        }
+        details summary {
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
 
-    /* 🔽 New Drag & Drop Styles 🔽 */
-    #drop-area {
-        border: 2px dashed #007BFF;
-        padding: 20px;
-        text-align: center;
-        background-color: #f9f9f9;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    #drop-area.hover {
-        background-color: #e0f0ff;
-    }
-</style>
-
+        /* Drag & Drop Style */
+        .drop-area {
+            border: 2px dashed #007BFF;
+            padding: 20px;
+            text-align: center;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.2s ease-in-out;
+            margin-bottom: 10px;
+        }
+        .drop-area.hover {
+            background-color: #e0f0ff;
+        }
+    </style>
 </head>
-<body>
 
+<body>
 <h1>All-In-One Dashboard</h1>
 
-<!-- Section 1: Excel Formatter -->
+<!-- Section 1: Excel Formatter with Drag & Drop Support -->
 <div class="section">
-    <h2>📁 Excel Formatter</h2>
-    <p>Upload a raw Excel file. It will automatically be formatted and downloaded.</p>
-    <p>Note: for the moment, this is only for formatting testing reports.</p>
+    <h2>📁 Testing Report Formatting Tool</h2>
+    <p>Upload an Excel file. It will automatically be formatted and downloaded.</p>
 
-    <form method="POST" enctype="multipart/form-data" id="excel-form">
-        <div id="drop-area">
-            <p>Drag & Drop file here or click to select</p>
-            <input type="file" name="file" id="excel-file" required hidden>
+    <div class="form-container">
+        <!-- Standard Format -->
+        <div class="form-box">
+            <p><strong>Standard Format:</strong> Accepts All-Time Inventory reports.</p>
+            <form method="POST" action="/format-excel" enctype="multipart/form-data" id="standard-form">
+                <div class="drop-area" id="drop-area-standard">📤 Drag & Drop or Click to Upload</div>
+                <input type="file" name="file" id="file-input-standard" style="display: none;" required>
+                <button type="submit">Standard Format</button>
+            </form>
         </div>
-        <button type="submit" name="action" value="format" style="margin-top: 10px;">Format Testing Report</button>
-        <button type="submit" name="action" value="attribute" style="margin-top: 10px; margin-left: 10px;">Auto Attribute</button>
-    </form>
+
+        <!-- Extreme Format -->
+        <div class="form-box">
+            <p><strong>Extreme Format:</strong> Accepts full Extreme reports.</p>
+            <form method="POST" action="/format-extreme" enctype="multipart/form-data" id="extreme-form">
+                <div class="drop-area" id="drop-area-extreme">📤 Drag & Drop or Click to Upload</div>
+                <input type="file" name="file" id="file-input-extreme" style="display: none;" required>
+                <button type="submit">Extreme Format</button>
+            </form>
+        </div>
+    </div>
 </div>
+
+<!-- JS for Drag & Drop with Filename Display -->
+<script>
+    function setupDragAndDrop(dropAreaId, inputId) {
+        const dropArea = document.getElementById(dropAreaId);
+        const fileInput = document.getElementById(inputId);
+
+        // Helper: update dropArea text with file name(s)
+        function updateDropAreaText(files) {
+            if (files.length === 1) {
+                dropArea.textContent = `📁 Selected file: ${files[0].name}`;
+            } else if (files.length > 1) {
+                dropArea.textContent = `📁 Selected ${files.length} files`;
+            } else {
+                dropArea.textContent = '📤 Drag & Drop or Click to Upload';
+            }
+        }
+
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropArea.classList.add('hover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropArea.classList.remove('hover');
+            });
+        });
+
+        dropArea.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateDropAreaText(files);
+            }
+        });
+
+        // When file selected via dialog
+        fileInput.addEventListener('change', () => {
+            updateDropAreaText(fileInput.files);
+        });
+    }
+
+    // Apply drag-and-drop logic to both forms
+    setupDragAndDrop('drop-area-standard', 'file-input-standard');
+    setupDragAndDrop('drop-area-extreme', 'file-input-extreme');
+</script>
 
 
 <!-- Section 2: eBay Scraper -->
@@ -118,32 +181,6 @@
     <div id="scraper-output" style="margin-top: 20px;"></div>
 </div>
 
-
-<!-- Section 3: Dash Pricing Dashboard -->
-<div class="section">
-    <h2>📊 Pricing Dashboard</h2>
-    <p>Explore financial summaries and profit metrics from historical pricing data.</p>
-
-    <form id="pricing-history-form">
-        <label><strong>Upload Pricing History Excel File:</strong></label>
-        <input type="file" name="pricing_file" required>
-        <button type="submit">Upload Pricing History</button>
-    </form>
-
-<!--    <form id="product-inventory-form" style="margin-top: 20px;">-->
-<!--        <label><strong>Upload Product Inventory Excel File:</strong></label>-->
-<!--        <input type="file" name="product_file" required>-->
-<!--        <button type="submit">Upload Product Inventory File</button>-->
-<!--    </form>-->
-
-    <div id="pricing-upload-output" style="margin-top: 10px;"></div>
-
-    <iframe id="dash-frame" src="/dash/"></iframe>
-
-    <hr style="margin: 20px 0;">
-</div>
-
-<!-- JS: eBay Scraper -->
 <script>
     document.getElementById("scraper-form").addEventListener("submit", async function(e) {
         e.preventDefault();
@@ -190,8 +227,30 @@
     });
 </script>
 
+<!-- Section 3: Dash Pricing Dashboard -->
+<div class="section">
+    <h2>📊 Pricing Dashboard</h2>
+    <p>Explore financial summaries and profit metrics from historical pricing data.</p>
 
-<!-- JS: Pricing Dashboard File Uploads -->
+    <form id="pricing-history-form">
+        <label><strong>Upload Pricing History Excel File:</strong></label>
+        <input type="file" name="pricing_file" required>
+        <button type="submit">Upload Pricing History</button>
+    </form>
+
+<!--    <form id="product-inventory-form" style="margin-top: 20px;">-->
+<!--        <label><strong>Upload Product Inventory Excel File:</strong></label>-->
+<!--        <input type="file" name="product_file" required>-->
+<!--        <button type="submit">Upload Product Inventory File</button>-->
+<!--    </form>-->
+
+    <div id="pricing-upload-output" style="margin-top: 10px;"></div>
+
+    <iframe id="dash-frame" src="/dash/"></iframe>
+
+    <hr style="margin: 20px 0;">
+</div>
+
 <script>
     document.getElementById("pricing-history-form").addEventListener("submit", async function (e) {
         e.preventDefault();
