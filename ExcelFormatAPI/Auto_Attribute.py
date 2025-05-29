@@ -211,7 +211,8 @@ def process_extreme_attributes(workbook):
             device_type = 'Desktops'
             dash, devices = process_extreme_desktops(raw_dataframe)
 
-        elif device_type == 'Laptops':
+        elif device_type == 'Laptop':
+            device_type = 'Laptops'
             dash, devices =  process_extreme_laptops(raw_dataframe)
 
 
