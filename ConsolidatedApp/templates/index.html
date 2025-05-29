@@ -232,17 +232,18 @@
     <h2>📊 Pricing Dashboard</h2>
     <p>Explore financial summaries and profit metrics from historical pricing data.</p>
 
-    <form id="pricing-history-form">
+    <form id="pricing-history-form" enctype="multipart/form-data">
         <label><strong>Upload Pricing History Excel File:</strong></label>
-        <input type="file" name="pricing_file" required>
-        <button type="submit">Upload Pricing History</button>
-    </form>
 
-<!--    <form id="product-inventory-form" style="margin-top: 20px;">-->
-<!--        <label><strong>Upload Product Inventory Excel File:</strong></label>-->
-<!--        <input type="file" name="product_file" required>-->
-<!--        <button type="submit">Upload Product Inventory File</button>-->
-<!--    </form>-->
+        <!-- Drag & Drop Area -->
+        <div id="drop-area-pricing" class="drop-area">
+            📤 Drag & Drop or Click to Upload
+            <div id="pricing-file-name" style="margin-top: 10px; font-style: italic;"></div>
+        </div>
+
+        <input type="file" name="pricing_file" id="file-input-pricing" style="display: none;" required>
+        <button type="submit" style="margin-top: 10px;">Upload Pricing History</button>
+    </form>
 
     <div id="pricing-upload-output" style="margin-top: 10px;"></div>
 
@@ -251,13 +252,54 @@
     <hr style="margin: 20px 0;">
 </div>
 
+<!-- Drag & Drop and Upload Logic -->
 <script>
-    document.getElementById("pricing-history-form").addEventListener("submit", async function (e) {
+    const dropArea = document.getElementById('drop-area-pricing');
+    const fileInput = document.getElementById('file-input-pricing');
+    const fileNameDisplay = document.getElementById('pricing-file-name');
+    const uploadForm = document.getElementById("pricing-history-form");
+    const outputDiv = document.getElementById("pricing-upload-output");
+
+    // Click to open file dialog
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    // Highlight drop area
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, e => {
+            e.preventDefault();
+            dropArea.classList.add('hover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, e => {
+            e.preventDefault();
+            dropArea.classList.remove('hover');
+        });
+    });
+
+    // Handle dropped files
+    dropArea.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileNameDisplay.textContent = `Selected file: ${files[0].name}`;
+        }
+    });
+
+    // Handle manual selection
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+        } else {
+            fileNameDisplay.textContent = '';
+        }
+    });
+
+    // Handle submission
+    uploadForm.addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData();
-        const fileInput = e.target.querySelector("input[type='file']");
-        const outputDiv = document.getElementById("pricing-upload-output");
-
         if (fileInput.files.length < 1) {
             outputDiv.innerHTML = "<p style='color: red;'>Please select a pricing history file.</p>";
             return;
@@ -275,89 +317,12 @@
 
             if (result.success) {
                 outputDiv.innerHTML = "<p style='color: green;'>Pricing history uploaded successfully.</p>";
-
-                // Reload the Dash iframe to reflect updated data
-                const iframe = document.getElementById("dash-frame");
-                iframe.src = iframe.src;
+                document.getElementById("dash-frame").src = document.getElementById("dash-frame").src;
             } else {
                 outputDiv.innerHTML = `<p style='color: red;'>Error: ${result.error}</p>`;
             }
         } catch (err) {
             outputDiv.innerHTML = `<p style='color: red;'>Upload failed: ${err.message}</p>`;
-        }
-    });
-
-    document.getElementById("product-inventory-form").addEventListener("submit", async function (e) {
-        e.preventDefault();
-        const formData = new FormData();
-        const fileInput = e.target.querySelector("input[type='file']");
-        const outputDiv = document.getElementById("pricing-upload-output");
-
-        if (fileInput.files.length < 1) {
-            outputDiv.innerHTML = "<p style='color: red;'>Please select the second Excel file.</p>";
-            return;
-        }
-
-        formData.append("file", fileInput.files[0]);
-
-        try {
-            const response = await fetch("/upload-second-excel", {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                outputDiv.innerHTML = "<p style='color: green;'>Second Excel file uploaded successfully.</p>";
-            } else {
-                outputDiv.innerHTML = `<p style='color: red;'>Error: ${result.error}</p>`;
-            }
-        } catch (err) {
-            outputDiv.innerHTML = `<p style='color: red;'>Upload failed: ${err.message}</p>`;
-        }
-    });
-</script>
-
-<script>
-    const excelForm = document.getElementById("excel-form");
-
-    excelForm.addEventListener("submit", function (e) {
-        const clickedButton = document.activeElement;
-        if (clickedButton.value === "format") {
-            excelForm.action = "/format-excel";
-        } else if (clickedButton.value === "attribute") {
-            excelForm.action = "/auto-attribute";
-        }
-    });
-
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('excel-file');
-
-    // Clicking the drop area opens file dialog
-    dropArea.addEventListener('click', () => fileInput.click());
-
-    // Highlight drop area on drag
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropArea.classList.add('hover');
-        });
-    });
-
-    // Remove highlight when not dragging
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('hover');
-        });
-    });
-
-    // Handle dropped files
-    dropArea.addEventListener('drop', (e) => {
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;  // Attach dropped file to hidden input
         }
     });
 </script>
