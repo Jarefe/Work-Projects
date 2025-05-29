@@ -208,10 +208,10 @@ def process_extreme_attributes(workbook):
         device_type = raw_dataframe['Category'].iloc[0]
 
         if device_type == 'PC' or device_type == 'Desktop':
-            device_type = 'Desktop'
+            device_type = 'Desktops'
             dash, devices = process_extreme_desktops(raw_dataframe)
 
-        elif device_type == 'Laptop':
+        elif device_type == 'Laptops':
             dash, devices =  process_extreme_laptops(raw_dataframe)
 
 

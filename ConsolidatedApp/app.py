@@ -10,6 +10,7 @@ from Pricing.Price_History import (
     profit_margin_distribution, avg_days_to_sell_by_condition, monthly_sales_volume
 )
 from ExcelFormatAPI.FormatReportProduction import format_excel_file
+from ExcelFormatAPI.Auto_Attribute import process_extreme_attributes
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -134,11 +135,25 @@ def format_excel():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/auto-attribute')
+@app.route('/format-extreme', methods=['POST'])
 def attribute():
     file_storage = request.files['file']
-    # TODO: implement auto attribute function
-    return jsonify({'error': 'Not implemented yet'}), 501
+    try:
+        workbook = process_extreme_attributes(file_storage)
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+        workbook.save(temp_file.name)
+
+        filename = temp_file.name.split('/')[-1]
+        TEMP_FILES[filename] = temp_file.name
+
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name="formatted_excel.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/download/<filename>')
 def download_file(filename):
