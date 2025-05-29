@@ -240,6 +240,92 @@ def monthly_profit_over_time(df):
     return fig
 
 
+def profit_margin_distribution(df):
+    """
+    Plot the distribution of profit margins (percentage) across items.
+
+    Purpose:
+        Helps identify the profitability of items relative to their purchase cost.
+        Useful for comparing how efficient pricing strategies are.
+
+    :param df: DataFrame containing 'Profit' and 'Purchase Cost' columns.
+    :return: Plotly histogram figure object.
+    """
+    df = df.copy()  # Avoid modifying original DataFrame
+    df['Profit Margin (%)'] = (df['Profit'] / df['Purchase Cost']) * 100  # Calculate profit margin %
+    df = df[df['Purchase Cost'] > 0]  # Filter out rows with zero cost to avoid division errors
+
+    fig = px.histogram(
+        df,
+        x='Profit Margin (%)',
+        nbins=50,
+        title='Profit Margin Distribution (%)',
+        color_discrete_sequence=['green'],
+        marginal='box'  # Show boxplot on top for additional statistical insight
+    )
+    return fig
+
+
+def avg_days_to_sell_by_condition(df):
+    """
+    Visualize average time taken to sell items, grouped by their condition.
+
+    Purpose:
+        Helps determine which item conditions (e.g., New, Used, Refurbished) tend to
+        move faster or slower in the market.
+
+    :param df: DataFrame with 'Purchase Date', 'Sale Date', and 'Condition' columns.
+    :return: Plotly bar chart figure object.
+    """
+    df = df.copy()
+    df['# Days to sell'] = df.apply(
+        lambda row: calculate_date_difference(row['Purchase Date'], row['Sale Date']),
+        axis=1
+    )
+
+    condition_days = df.groupby('Condition')['# Days to sell'].mean().reset_index()
+
+    fig = px.bar(
+        condition_days,
+        x='Condition',
+        y='# Days to sell',
+        title='Avg Days to Sell by Item Condition',
+        labels={'# Days to sell': 'Avg Days to Sell'},
+        color='Condition'
+    )
+    return fig
+
+
+def monthly_sales_volume(df):
+    """
+    Plot the number of units sold each month.
+
+    Purpose:
+        Reveals seasonal or monthly trends in item sales volume,
+        useful for planning restocking and promotions.
+
+    :param df: DataFrame containing a 'Sale Date' column.
+    :return: Plotly line chart figure object.
+    """
+    df = df.copy()
+    df['Sale Date'] = pd.to_datetime(df['Sale Date'], errors='coerce')  # Convert to datetime
+    df = df.dropna(subset=['Sale Date'])  # Remove rows with invalid dates
+
+    # Group by month and count number of sales
+    sales_volume = df.groupby(df['Sale Date'].dt.to_period('M')).size().reset_index(name='Sales Count')
+    sales_volume['Sale Date'] = sales_volume['Sale Date'].dt.to_timestamp()  # Convert period back to datetime
+
+    fig = px.line(
+        sales_volume,
+        x='Sale Date',
+        y='Sales Count',
+        title='Monthly Sales Volume',
+        markers=True,
+        labels={'Sales Count': 'Units Sold'}
+    )
+    return fig
+
+
 def process_pricing_history_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Process the raw dataset to clean, filter, and calculate metrics.
@@ -272,6 +358,9 @@ def output_graphs(df: pd.DataFrame):
     days_to_sell_distribution(df).show()
     avg_profit_by_purchase_range(df).show()
     monthly_profit_over_time(df).show()
+    profit_margin_distribution(df).show()
+    avg_days_to_sell_by_condition(df).show()
+    monthly_sales_volume(df).show()
 
 
 def read_all_sheets(filepath: str = None) -> pd.DataFrame:

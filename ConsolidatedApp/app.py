@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, jsonify, send_file
 from dash import Dash, dcc, html
-import dash, tempfile
+import dash
+import tempfile
 from Pricing.Ebay_Scraping import scrape_ebay_data
 from Pricing.Price_History import (
     process_pricing_history, profit_distribution, sale_price_vs_profit,
     sales_by_condition, days_to_sell_distribution,
-    avg_profit_by_purchase_range, monthly_profit_over_time
+    avg_profit_by_purchase_range, monthly_profit_over_time,
+    profit_margin_distribution, avg_days_to_sell_by_condition, monthly_sales_volume
 )
 from ExcelFormatAPI.FormatReportProduction import format_excel_file
 
@@ -25,16 +27,20 @@ dash_app = Dash(
     url_base_pathname='/dash/'
 )
 
+# Mapping of graph display names to functions
 graph_functions = {
     "Profit Distribution": profit_distribution,
     "Sale Price vs. Profit": sale_price_vs_profit,
     "Sales by Condition": sales_by_condition,
     "Days to Sell Distribution": days_to_sell_distribution,
     "Avg Profit by Purchase Range": avg_profit_by_purchase_range,
-    "Monthly Profit Over Time": monthly_profit_over_time
+    "Monthly Profit Over Time": monthly_profit_over_time,
+    "Profit Margin Distribution": profit_margin_distribution,
+    "Avg Days to Sell by Condition": avg_days_to_sell_by_condition,
+    "Monthly Sales Volume": monthly_sales_volume
 }
 
-# Layout
+# Dash layout
 dash_app.layout = html.Div([
     html.H1(id="dashboard-title", children="Financial Summary", style={'textAlign': 'center'}),
 
@@ -55,13 +61,15 @@ dash_app.layout = html.Div([
         dcc.Dropdown(
             id='graph-selector',
             options=[{'label': name, 'value': name} for name in graph_functions.keys()],
-            value='Profit Distribution'
+            value='Profit Distribution',
+            multi=False
         )
     ], id='dropdown-container', style={'width': '50%', 'margin': '0 auto'}),
 
     html.Div(id='graph-container', children=html.P("No data loaded. Please upload a pricing history file."))
 ])
 
+# Callback to update view
 @dash_app.callback(
     [
         dash.Output('dropdown-container', 'style'),
@@ -77,12 +85,7 @@ def update_view(view_type, selected_graph):
     if df is None or df.empty:
         return {'display': 'none'}, html.P("No data available. Upload a file to see graphs.")
 
-    if view_type == 'dropdown':
-        selected_func = graph_functions[selected_graph]
-        fig = selected_func(df)
-        return {'width': '50%', 'margin': '0 auto', 'display': 'block'}, dcc.Graph(figure=fig)
-
-    elif view_type == 'all':
+    if view_type == 'all':
         all_graphs = [
             html.Div([
                 html.H3(name, style={'textAlign': 'center'}),
@@ -92,11 +95,17 @@ def update_view(view_type, selected_graph):
         ]
         return {'display': 'none'}, all_graphs
 
-    return {'display': 'none'}, html.P("Unknown view type selected.")
+    # Dropdown view: one graph only
+    if selected_graph and selected_graph in graph_functions:
+        fig = graph_functions[selected_graph](df)
+        return {'width': '50%', 'margin': '0 auto', 'display': 'block'}, dcc.Graph(figure=fig)
 
+    return {'width': '50%', 'margin': '0 auto', 'display': 'block'}, html.P("Please select a valid graph.")
+
+# Callback to update title
 @dash_app.callback(
     dash.Output('dashboard-title', 'children'),
-    dash.Input('view-type', 'value')  # Trigger title update on view change
+    dash.Input('view-type', 'value')
 )
 def update_title(view_type):
     df = df_holder.get('df')
@@ -122,14 +131,14 @@ def format_excel():
             download_name="formatted_excel.xlsx",
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/auto-attribute')
 def attribute():
     file_storage = request.files['file']
-    #TODO: implement auto attribute function
+    # TODO: implement auto attribute function
+    return jsonify({'error': 'Not implemented yet'}), 501
 
 @app.route('/download/<filename>')
 def download_file(filename):
@@ -138,7 +147,6 @@ def download_file(filename):
     return "File not found or expired.", 404
 
 @app.route('/upload-pricing-history', methods=['POST'])
-#TODO: implement recovered revenue analysis
 def upload_pricing_history():
     file = request.files.get('file')
     if not file:
