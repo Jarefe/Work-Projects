@@ -177,12 +177,16 @@ def upload_pricing_history():
 
 @app.route('/scrape-ebay', methods=['POST'])
 def scrape_ebay():
-    search_query = request.get_data(as_text=True)
-    if not search_query:
+    data = request.get_json()  # <-- parse JSON payload
+
+    if not data or 'query' not in data:
         return jsonify({'error': 'No search query provided'}), 400
 
+    query = data.get('query', '').strip()
+    pages = int(data.get('pages', 1))
+
     try:
-        result = scrape_ebay_data(search_query)
+        result = scrape_ebay_data(query, pages)
         return jsonify({'results': result})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

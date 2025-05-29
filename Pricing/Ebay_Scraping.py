@@ -116,21 +116,22 @@ def calculate_price_statistics(prices: list):
 
     return np.mean(filtered_prices), max(filtered_prices), min(filtered_prices)
 
-def scrape_ebay_data(search=""):
-    # Get user input
+def scrape_ebay_data(search="", pages = 2):
     search = search.strip()
     if not search:
         raise ValueError("Empty search term.")
 
-    url = f'https://www.ebay.com/sch/i.html?_nkw={search.replace(' ', '+')}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1'
+    # Construct the eBay search URL reflecting the page count (showing page 1 as link)
+    url = f'https://www.ebay.com/sch/i.html?_nkw={search.replace(" ", "+")}&_sacat=0&_from=R40&rt=nc&LH_Sold=1&LH_Complete=1&_pgn=1'
 
-    # Fetch eBay data
-    fetched_prices = fetch_ebay_data(search)
-    fetched_prices = fetched_prices[2:] # remove first 2 values which are not relevant to price info
+    # You might want to optionally return a list of URLs for pages 1 to pages, but here we keep page=1 as main link
 
-    # Check if we have valid prices and compute the average price
+    # Fetch prices from multiple pages as needed (your fetch_ebay_data function needs to handle pages)
+    fetched_prices = fetch_ebay_data(search, pages)  # Make sure your fetch function supports page count
+    fetched_prices = fetched_prices[2:]  # Remove irrelevant data, as before
 
     avg_price, highest_price, lowest_price = calculate_price_statistics(fetched_prices)
+
     return {
         "url": url,
         "average price": avg_price,
